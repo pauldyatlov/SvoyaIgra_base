@@ -52,9 +52,15 @@ public class GamePlayerStats : MonoBehaviour, IPointerClickHandler
         _player.OnNameChanged += playerName => { _nameLabel.text = playerName; };
         _player.OnButtonPressed += () =>
         {
+            if (this == null)
+                return;
+
             StartCoroutine(Co_ChangeColorTemporary(0.1f, _defaultBackgroundColor, _blinkBackgroundColor,
                 () =>
                 {
+                    if (this == null)
+                        return;
+
                     StartCoroutine(Co_ChangeColorTemporary(0.1f, _blinkBackgroundColor, _defaultBackgroundColor,
                         () => { }));
                 }));
