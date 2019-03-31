@@ -7,7 +7,7 @@ namespace Quiz.Gameplay.UI
 {
     public class StreamVideo : MonoBehaviour
     {
-        [SerializeField] private RawImage _image;
+        [SerializeField] private RawImage _image = default;
 
         private VideoClip _videoClip;
 

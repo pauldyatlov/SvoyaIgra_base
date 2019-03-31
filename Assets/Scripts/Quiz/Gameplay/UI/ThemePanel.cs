@@ -7,11 +7,11 @@ namespace Quiz.Gameplay.UI
 {
     public class ThemePanel : UIElement
     {
-        [SerializeField] private CanvasGroup _canvasGroup;
-        [SerializeField] private TextMeshProUGUI _themeNameLabel;
+        [SerializeField] private CanvasGroup _canvasGroup = default;
+        [SerializeField] private TextMeshProUGUI _themeNameLabel = default;
 
-        [SerializeField] private QuestionPanel _questionPanel;
-        [SerializeField] private RectTransform _questionContainer;
+        [SerializeField] private QuestionPanel _questionPanel = default;
+        [SerializeField] private RectTransform _questionContainer = default;
 
         private ThemePlan _plan;
         private readonly Dictionary<QuestionPlan, QuestionPanel> _questions = new Dictionary<QuestionPlan, QuestionPanel>();

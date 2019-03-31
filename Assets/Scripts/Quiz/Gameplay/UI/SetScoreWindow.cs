@@ -7,11 +7,11 @@ namespace Quiz.Gameplay.UI
 {
     public class SetScoreWindow : UIElement
     {
-        [SerializeField] private Text _label;
-        [SerializeField] private InputField _inputField;
+        [SerializeField] private Text _label = default;
+        [SerializeField] private InputField _inputField = default;
 
-        [SerializeField] private Button _closeButton;
-        [SerializeField] private Button _setButton;
+        [SerializeField] private Button _closeButton = default;
+        [SerializeField] private Button _setButton = default;
 
         private const string SetScoreText = "Установим очки для {0}!";
 

@@ -10,20 +10,20 @@ namespace Quiz.Gameplay.UI
 {
     public class TaskScreen : UIElement
     {
-        [SerializeField] private GameObject _themesGameObject;
-        [SerializeField] private CatInPokeScreen _catInPokeScreen;
-        [SerializeField] private AudioSource _audioSource;
-        [SerializeField] private StreamVideo _videoPlayer;
+        [SerializeField] private GameObject _themesGameObject = default;
+        [SerializeField] private CatInPokeScreen _catInPokeScreen = default;
+        [SerializeField] private AudioSource _audioSource = default;
+        [SerializeField] private StreamVideo _videoPlayer = default;
 
-        [SerializeField] private Text _answeringPlayerLabel;
-        [SerializeField] private Text _timerLabel;
-        [SerializeField] private Text _label;
-        [SerializeField] private Image _image;
+        [SerializeField] private Text _answeringPlayerLabel = default;
+        [SerializeField] private Text _timerLabel = default;
+        [SerializeField] private Text _label = default;
+        [SerializeField] private Image _image = default;
 
-        [SerializeField] private Button _acceptButton;
-        [SerializeField] private Button _declineButton;
+        [SerializeField] private Button _acceptButton = default;
+        [SerializeField] private Button _declineButton = default;
 
-        [SerializeField] private Button _canAnswerButton;
+        [SerializeField] private Button _canAnswerButton = default;
 
         private readonly List<Player> _failedPlayers = new List<Player>();
         private bool _paused;

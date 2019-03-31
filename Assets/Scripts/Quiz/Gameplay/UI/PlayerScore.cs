@@ -9,18 +9,18 @@ namespace Quiz.Gameplay.UI
 {
     public class PlayerScore : UIElement
     {
-        [SerializeField] private Image _background;
+        [SerializeField] private Image _background = default;
 
-        [SerializeField] private Text _nameLabel;
-        [SerializeField] private Text _pointsLabel;
+        [SerializeField] private Text _nameLabel = default;
+        [SerializeField] private Text _pointsLabel = default;
 
-        [SerializeField] private Color _defaultBackgroundColor;
-        [SerializeField] private Color _blinkBackgroundColor;
+        [SerializeField] private Color _defaultBackgroundColor = default;
+        [SerializeField] private Color _blinkBackgroundColor = default;
 
-        [SerializeField] private Color _defaultLabelColor;
-        [SerializeField] private CanvasGroup _canvasGroup;
+//        [SerializeField] private Color _defaultLabelColor = default;
+        [SerializeField] private CanvasGroup _canvasGroup = default;
 
-        [SerializeField] private Button _closeButton;
+        [SerializeField] private Button _closeButton = default;
 
         private event Action<Player> OnPlayerSelected;
         private event Action<Player> OnPlayerKicked;

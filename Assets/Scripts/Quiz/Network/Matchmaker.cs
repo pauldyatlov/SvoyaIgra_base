@@ -16,20 +16,20 @@ namespace Quiz.Network
         {
             public class Message
             {
-                public string id;
-                public string text;
+                public string id = null;
+                public string text = null;
             }
 
             public class PlayerState
             {
-                public string id;
-                public bool online;
+                public string id = null;
+                public bool online = false;
             }
 
-            public string PlayerConnected;
-            public string PlayerDisconnected;
-            public Message PlayerMessage;
-            public PlayerState[] CurrentState;
+            public string PlayerConnected = null;
+            public string PlayerDisconnected = null;
+            public Message PlayerMessage = null;
+            public PlayerState[] CurrentState = null;
         }
 
         public class Stream

@@ -8,10 +8,10 @@ namespace Quiz.Gameplay.UI
 {
     public class CatInPokeScreen : UIElement
     {
-        [SerializeField] private Text _label;
+        [SerializeField] private Text _label = default;
 
-//        [SerializeField] private RectTransform _container;
-//        [SerializeField] private GamePlayerStats _playerStatsTemplate;
+//        [SerializeField] private RectTransform _container = default;
+//        [SerializeField] private GamePlayerStats _playerStatsTemplate = default;
 
 //        private readonly List<GamePlayerStats> _playersList = new List<GamePlayerStats>();
 

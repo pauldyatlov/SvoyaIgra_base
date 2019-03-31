@@ -9,8 +9,8 @@ namespace Quiz.Gameplay
 {
     public class MainApplication : MonoBehaviour
     {
-        [SerializeField] private Plan _plan;
-        [SerializeField] private UIController _uiController;
+        [SerializeField] private Plan _plan = default;
+        [SerializeField] private UIController _uiController = default;
 
         private readonly Dictionary<string, Player> _registeredPlayers = new Dictionary<string, Player>();
 

@@ -6,8 +6,8 @@ namespace Quiz.Gameplay.UI
 {
     public class RoundScreen : UIElement
     {
-        [SerializeField] private ThemePanel _themePanel;
-        [SerializeField] private RectTransform _themeContainer;
+        [SerializeField] private ThemePanel _themePanel = default;
+        [SerializeField] private RectTransform _themeContainer = default;
 
         private RoundPlan _plan;
         private readonly Dictionary<ThemePlan, ThemePanel> _themes = new Dictionary<ThemePlan, ThemePanel>();

@@ -7,10 +7,10 @@ namespace Quiz.Gameplay.UI
 {
     public class QuestionPanel : UIElement
     {
-        [SerializeField] private GameObject _background;
+        [SerializeField] private GameObject _background = default;
 
-        [SerializeField] private CanvasGroup _canvasGroup;
-        [SerializeField] private TextMeshProUGUI _price;
+        [SerializeField] private CanvasGroup _canvasGroup = default;
+        [SerializeField] private TextMeshProUGUI _price = default;
 
         private QuestionPlan _plan;
         private Action<QuestionPlan> _onQuestionSelected;
