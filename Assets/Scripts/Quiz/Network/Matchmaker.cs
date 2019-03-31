@@ -28,6 +28,8 @@ namespace Quiz.Network
                 public bool online = false;
             }
 
+            public string PlayerJoined = null;
+            public string PlayerLeft = null;
             public string PlayerConnected = null;
             public string PlayerDisconnected = null;
             public Message PlayerMessage = null;
@@ -37,15 +39,40 @@ namespace Quiz.Network
         public class Stream
         {
             public readonly string Id;
-            public bool Online { get; private set; }
+
+            private bool _online;
+
+            public bool Online
+            {
+                get => _online;
+                internal set
+                {
+                    if (_online != value)
+                    {
+                        _online = value;
+                        _onlineStatusChanged?.Invoke(value);
+                    }
+                }
+            }
 
             private readonly Matchmaker _matchmaker;
             public Action<string> MessageReceived;
 
+            private Action<bool> _onlineStatusChanged;
+            public event Action<bool> OnlineStatusChanged
+            {
+                add
+                {
+                    _onlineStatusChanged += value;
+                    value(_online);
+                }
+                remove => _onlineStatusChanged -= value;
+            }
+
             internal Stream(string id, bool online, Matchmaker matchmaker)
             {
                 Id = id;
-                Online = online;
+                _online = online;
                 _matchmaker = matchmaker;
             }
 
@@ -59,6 +86,7 @@ namespace Quiz.Network
 
         private readonly ClientWebSocket _webSocket;
         private readonly string _gameName;
+        private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
 
         private Matchmaker(ClientWebSocket webSocket, string gameName)
         {
@@ -109,12 +137,20 @@ namespace Quiz.Network
 
         public void KickPlayer(Stream stream) => _ = SendObjectAsync(new { KickPlayer = stream.Id });
 
-        private Task SendStringAsync(string text)
-            => _webSocket.SendAsync(
-                buffer: new ArraySegment<byte>(Encoding.UTF8.GetBytes(text)),
-                messageType: WebSocketMessageType.Text,
-                endOfMessage: true,
-                CancellationToken.None);
+        private async Task SendStringAsync(string text)
+        {
+            await _sendLock.WaitAsync();
+
+            try {
+                await _webSocket.SendAsync(
+                    buffer: new ArraySegment<byte>(Encoding.UTF8.GetBytes(text)),
+                    messageType: WebSocketMessageType.Text,
+                    endOfMessage: true,
+                    CancellationToken.None);
+            } finally {
+                _sendLock.Release();
+            }
+        }
 
         private Task SendObjectAsync(object obj) => SendStringAsync(JsonConvert.SerializeObject(obj));
         private Task Login(string gameName) => SendObjectAsync(new { Login = gameName });
@@ -169,19 +205,32 @@ namespace Quiz.Network
                                 PlayerAdded?.Invoke(player);
                             }
                         }
-                        else if (!string.IsNullOrEmpty(response.PlayerConnected))
+                        else if (!string.IsNullOrEmpty(response.PlayerJoined))
                         {
-                            var player = new Stream(response.PlayerConnected, true, this);
+                            var player = new Stream(response.PlayerJoined, true, this);
 
                             Players.Add(player);
                             PlayerAdded?.Invoke(player);
+                        }
+                        else if (!string.IsNullOrEmpty(response.PlayerLeft))
+                        {
+                            var player = Players.FirstOrDefault(x => x.Id == response.PlayerLeft);
+
+                            Players.Remove(player);
+                            PlayerRemoved?.Invoke(player);
+                        }
+                        else if (!string.IsNullOrEmpty(response.PlayerConnected)) {
+                            var player = Players.FirstOrDefault(x => x.Id == response.PlayerConnected);
+
+                            if (player != null)
+                                player.Online = true;
                         }
                         else if (!string.IsNullOrEmpty(response.PlayerDisconnected))
                         {
                             var player = Players.FirstOrDefault(x => x.Id == response.PlayerDisconnected);
 
-                            Players.Remove(player);
-                            PlayerRemoved?.Invoke(player);
+                            if (player != null)
+                                player.Online = false;
                         }
                         else if (response.PlayerMessage != null)
                         {

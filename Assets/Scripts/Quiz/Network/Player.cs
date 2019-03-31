@@ -1,6 +1,7 @@
 ﻿using System;
 using Newtonsoft.Json;
 using Quiz.Gameplay;
+using UnityEngine;
 
 namespace Quiz.Network
 {
@@ -22,15 +23,24 @@ namespace Quiz.Network
             public string Answer;
         }
 
+        public bool Online => Stream.Online;
+        public event Action<bool> OnlineStatusChanged
+        {
+            add => Stream.OnlineStatusChanged += value;
+            remove => Stream.OnlineStatusChanged -= value;
+        }
+
         public Player(Matchmaker.Stream stream)
         {
             Stream = stream;
 
-            OnNameChanged += newName =>
-                SendMessage(new QuizCommand {Command = "NameChanged", Parameter = newName});
+            void OnOnNameChanged(string newName)
+                => SendMessage(new QuizCommand { Command = "NameChanged", Parameter = newName });
+            void OnPointsChanged(Player player)
+                => SendMessage(new QuizCommand { Command = "PointsChanged", Parameter = player.Points.ToString() });
 
-            OnPointsUpdateAction += player =>
-                SendMessage(new QuizCommand {Command = "PointsChanged", Parameter = player.Points.ToString()});
+            OnNameChanged += OnOnNameChanged;
+            OnPointsUpdateAction += OnPointsChanged;
 
             Points = 0;
             OnPointsUpdateAction?.Invoke(this);
@@ -53,6 +63,14 @@ namespace Quiz.Network
 
                     OnButtonPressed?.Invoke();
                 }
+            };
+
+            stream.OnlineStatusChanged += online => {
+                if (!online)
+                    return;
+
+                OnOnNameChanged(Name);
+                OnPointsChanged(this);
             };
 
             SocketServer.OnPlayerConnected?.Invoke(this);

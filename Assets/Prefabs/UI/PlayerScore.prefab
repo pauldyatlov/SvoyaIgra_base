@@ -250,6 +250,7 @@ MonoBehaviour:
   _pointsLabel: {fileID: 11433232}
   _defaultBackgroundColor: {r: 0, g: 0, b: 0, a: 0.57254905}
   _blinkBackgroundColor: {r: 0.8773585, g: 0.78047675, b: 0.53333336, a: 0.6862745}
+  _offlineBackgroundColor: {r: 0.685, g: 0.685, b: 0.685, a: 0.57254905}
   _canvasGroup: {fileID: 225172477981885880}
   _closeButton: {fileID: 4245300459283739873}
 --- !u!114 &114881305994093186
