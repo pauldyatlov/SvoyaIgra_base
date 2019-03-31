@@ -1,0 +1,107 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Quiz.Network;
+using UnityEngine;
+
+namespace Quiz.Gameplay.UI
+{
+    // ReSharper disable once InconsistentNaming
+    public class UIController : MonoBehaviour
+    {
+        [SerializeField] private RoundScreen _roundScreenTemplate;
+        [SerializeField] private RectTransform _roundContainer;
+
+        [SerializeField] private PlayerScore _playerScoreTemplate;
+        [SerializeField] private RectTransform _scoreContainer;
+
+        [SerializeField] private TaskScreen _taskScreen;
+        [SerializeField] private SetScoreWindow _setScoreWindow;
+
+        public event Action<Player> PlayerAnswering;
+
+        public readonly Dictionary<Player, PlayerScore> PlayerViews = new Dictionary<Player, PlayerScore>();
+
+        private int _currentRound;
+
+        private readonly Dictionary<int, RoundScreen> _rounds = new Dictionary<int, RoundScreen>();
+        private Action<Player> _onPlayerKicked;
+
+        public void Show(Plan plan, Action<Player> onPlayerKicked)
+        {
+            _onPlayerKicked = onPlayerKicked;
+
+            SocketServer.OnPlayerAnswered += OnPlayerAnswering;
+
+            for (var i = 0; i < plan.RoundsList.Count; i++)
+            {
+                var round = plan.RoundsList[i];
+                var roundScreen = Instantiate(_roundScreenTemplate, _roundContainer);
+                roundScreen.Show(round, question => { _taskScreen.Show(question, this); },
+                    RemoveRound);
+
+                if (i == 0)
+                    roundScreen.ShowGameObject();
+
+                _rounds.Add(i, roundScreen);
+            }
+
+            _currentRound = 0;
+        }
+
+        private void RemoveRound(RoundPlan round)
+        {
+            _rounds[_currentRound].HideGameObject();
+            _rounds.Remove(_currentRound);
+
+            _currentRound++;
+            _rounds[_currentRound].ShowGameObject();
+        }
+
+        private void OnPlayerSelected(Player player)
+        {
+            _setScoreWindow.Show(player, score =>
+            {
+                int.TryParse(score, out var intScore);
+
+                player.SetPoints(intScore);
+            });
+        }
+
+        public void PlayerDisconnected(KeyValuePair<string, Player> player)
+        {
+            var view = PlayerViews.FirstOrDefault(x => x.Key.Name == player.Key);
+
+            if (view.Value == null)
+            {
+                Debug.LogError("Can't find view for " + player.Key);
+                return;
+            }
+
+            view.Value.HideGameObject();
+
+            PlayerViews.Remove(view.Key);
+        }
+
+        public void NewPlayerConnected(Player player)
+        {
+            var scorePanel = Instantiate(_playerScoreTemplate, _scoreContainer);
+            scorePanel.Show(player, OnPlayerSelected, _onPlayerKicked);
+
+            PlayerViews.Add(player, scorePanel);
+        }
+
+        private void OnPlayerAnswering(string name)
+        {
+            var player = PlayerViews.FirstOrDefault(x => x.Key.Name == name);
+
+            if (player.Value == null)
+            {
+                Debug.LogError("Cannot find view to set as ansering");
+                return;
+            }
+
+            PlayerAnswering?.Invoke(player.Key);
+        }
+    }
+}
