@@ -127,6 +127,7 @@ namespace Quiz.Gameplay.UI
             _declineButton.gameObject.SetActive(true);
 
             Time.timeScale = 0.0f;
+            _audioSource.Pause();
 
             SetAsAnswering(arg, true);
         }
@@ -158,9 +159,12 @@ namespace Quiz.Gameplay.UI
         private void CorrectAnswer()
         {
             SetAsAnswering(_answeringPlayer, false);
+
             _answeringPlayer.UpdatePoints(QuestionPrice);
+            _uiController.SetDecisionMaker(_answeringPlayer);
 
             Time.timeScale = 1.0f;
+            _audioSource.UnPause();
 
             _answeringPlayer.SendMessage(new QuizCommand
             {
@@ -181,6 +185,7 @@ namespace Quiz.Gameplay.UI
             _answeringPlayer.UpdatePoints(-QuestionPrice);
 
             Time.timeScale = 1.0f;
+            _audioSource.UnPause();
 
             _acceptButton.gameObject.SetActive(false);
             _declineButton.gameObject.SetActive(false);

@@ -9,6 +9,7 @@ namespace Quiz.Gameplay.UI
 {
     public class PlayerScore : UIElement
     {
+        [SerializeField] private GameObject _decisionMakerMarker = default;
         [SerializeField] private Image _background = default;
 
         [SerializeField] private Text _nameLabel = default;
@@ -19,7 +20,6 @@ namespace Quiz.Gameplay.UI
 
 //        [SerializeField] private Color _defaultLabelColor = default;
         [SerializeField] private CanvasGroup _canvasGroup = default;
-
         [SerializeField] private Button _closeButton = default;
 
         private event Action<Player> OnPlayerSelected;
@@ -65,6 +65,11 @@ namespace Quiz.Gameplay.UI
                         StartCoroutine(Co_ChangeColorTemporary(0.1f, _blinkBackgroundColor, _defaultBackgroundColor,
                             () => { }));
                     }));
+            };
+
+            _player.OnSetAsDecisionMaker += arg =>
+            {
+                _decisionMakerMarker.SetActive(arg);
             };
         }
 

@@ -14,6 +14,7 @@ namespace Quiz.Network
         public Action<Player> OnPointsUpdateAction;
         public Action<string> OnNameChanged;
         public Action OnButtonPressed;
+        public Action<bool> OnSetAsDecisionMaker;
 
         public class PlayerMessage
         {

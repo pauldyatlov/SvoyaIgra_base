@@ -14,7 +14,10 @@ namespace Quiz.Gameplay.UI
         [SerializeField] private RectTransform _questionContainer = default;
 
         private ThemePlan _plan;
-        private readonly Dictionary<QuestionPlan, QuestionPanel> _questions = new Dictionary<QuestionPlan, QuestionPanel>();
+
+        private readonly Dictionary<QuestionPlan, QuestionPanel> _questions =
+            new Dictionary<QuestionPlan, QuestionPanel>();
+
         private Action<ThemePlan> _onQuestionsEnded;
 
         public void Show(ThemePlan plan, Action<QuestionPlan> onQuestionSelected, Action<ThemePlan> onQuestionsEnded)

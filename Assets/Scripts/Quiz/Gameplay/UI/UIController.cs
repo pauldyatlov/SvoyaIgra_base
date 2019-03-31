@@ -9,23 +9,23 @@ namespace Quiz.Gameplay.UI
     // ReSharper disable once InconsistentNaming
     public class UIController : MonoBehaviour
     {
-        [SerializeField] private RoundScreen _roundScreenTemplate = default;
-        [SerializeField] private RectTransform _roundContainer = default;
+        [SerializeField] private RoundScreen _roundScreenTemplate;
+        [SerializeField] private RectTransform _roundContainer;
 
-        [SerializeField] private PlayerScore _playerScoreTemplate = default;
-        [SerializeField] private RectTransform _scoreContainer = default;
+        [SerializeField] private PlayerScore _playerScoreTemplate;
+        [SerializeField] private RectTransform _scoreContainer;
 
-        [SerializeField] private TaskScreen _taskScreen = default;
-        [SerializeField] private SetScoreWindow _setScoreWindow = default;
+        [SerializeField] private TaskScreen _taskScreen;
+        [SerializeField] private SetScoreWindow _setScoreWindow;
 
         public event Action<Player> PlayerAnswering;
 
         public readonly Dictionary<Player, PlayerScore> PlayerViews = new Dictionary<Player, PlayerScore>();
-
-        private int _currentRound;
-
         private readonly Dictionary<int, RoundScreen> _rounds = new Dictionary<int, RoundScreen>();
         private Action<Player> _onPlayerKicked;
+
+        private int _currentRound;
+        private Player _decisionMaker;
 
         public void Show(Plan plan, Action<Player> onPlayerKicked)
         {
@@ -56,6 +56,8 @@ namespace Quiz.Gameplay.UI
 
             _currentRound++;
             _rounds[_currentRound].ShowGameObject();
+
+            SetDecisionMaker(PlayerViews.OrderBy(x => x.Key.Points).FirstOrDefault().Key);
         }
 
         private void OnPlayerSelected(Player player)
@@ -91,17 +93,28 @@ namespace Quiz.Gameplay.UI
             PlayerViews.Add(player, scorePanel);
         }
 
-        private void OnPlayerAnswering(string name)
+        private void OnPlayerAnswering(string playerName)
         {
-            var player = PlayerViews.FirstOrDefault(x => x.Key.Name == name);
+            var player = PlayerViews.FirstOrDefault(x => x.Key.Name == playerName);
 
             if (player.Value == null)
             {
-                Debug.LogError("Cannot find view to set as ansering");
+                Debug.LogError("Cannot find view to set as answering");
                 return;
             }
 
             PlayerAnswering?.Invoke(player.Key);
+        }
+
+        public void SetDecisionMaker(Player player)
+        {
+            if (_decisionMaker == player)
+                return;
+
+            _decisionMaker?.OnSetAsDecisionMaker?.Invoke(false);
+
+            _decisionMaker = player;
+            _decisionMaker.OnSetAsDecisionMaker?.Invoke(true);
         }
     }
 }
