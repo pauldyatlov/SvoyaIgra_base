@@ -143,7 +143,7 @@ namespace Quiz.Gameplay.UI
             if (_timeCoroutine != null)
                 StopCoroutine(_timeCoroutine);
 
-            _timeCoroutine = StartCoroutine(Co_RoundTimer(_plane.IsCatInPoke ? 1 : MinTimer));
+            _timeCoroutine = StartCoroutine(Co_RoundTimer(_plane.IsCatInPoke ? 0.1f : MinTimer));
 
             _canAnswerButton.gameObject.SetActive(false);
 
@@ -221,6 +221,9 @@ namespace Quiz.Gameplay.UI
                     _timerLabel.text = (time - i).ToString(CultureInfo.InvariantCulture);
 
                     yield return new WaitForSeconds(1);
+
+                    if (i == 10)
+                        SoundManager.Instance.PlayNoAnswer();
                 }
 
                 Close();

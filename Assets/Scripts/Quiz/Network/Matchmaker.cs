@@ -138,7 +138,7 @@ namespace Quiz.Network
                     {
                         var matchmakerMessage = await _networkStream.ReadString();
 
-                        Debug.LogWarning("Message: " + matchmakerMessage);
+                        Debug.Log("Message: " + matchmakerMessage);
 
                         var response = JsonConvert.DeserializeObject<Response>(matchmakerMessage);
 
