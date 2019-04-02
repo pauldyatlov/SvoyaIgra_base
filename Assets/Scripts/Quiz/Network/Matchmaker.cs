@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Sockets;
+using System.Net.WebSockets;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Debug = UnityEngine.Debug;
@@ -26,6 +28,8 @@ namespace Quiz.Network
                 public bool online = false;
             }
 
+            public string PlayerJoined = null;
+            public string PlayerLeft = null;
             public string PlayerConnected = null;
             public string PlayerDisconnected = null;
             public Message PlayerMessage = null;
@@ -35,75 +39,83 @@ namespace Quiz.Network
         public class Stream
         {
             public readonly string Id;
-            public bool Online { get; private set; }
+
+            private bool _online;
+
+            public bool Online
+            {
+                get => _online;
+                internal set
+                {
+                    if (_online != value)
+                    {
+                        _online = value;
+                        _onlineStatusChanged?.Invoke(value);
+                    }
+                }
+            }
 
             private readonly Matchmaker _matchmaker;
             public Action<string> MessageReceived;
 
+            private Action<bool> _onlineStatusChanged;
+            public event Action<bool> OnlineStatusChanged
+            {
+                add
+                {
+                    _onlineStatusChanged += value;
+                    value(_online);
+                }
+                remove => _onlineStatusChanged -= value;
+            }
+
             internal Stream(string id, bool online, Matchmaker matchmaker)
             {
                 Id = id;
-                Online = online;
+                _online = online;
                 _matchmaker = matchmaker;
             }
 
-            public void Kick() =>
-                _matchmaker.KickPlayer(this);
-
-            public void SendMessage(string data)
-            {
-                _matchmaker.SendMessage(Enumerable.Repeat(this, 1), data);
-            }
+            public void Kick() => _matchmaker.KickPlayer(this);
+            public void SendMessage(string data) => _matchmaker.SendMessage(Enumerable.Repeat(this, 1), data);
         }
 
         public readonly List<Stream> Players = new List<Stream>();
         public event Action<Stream> PlayerAdded;
         public event Action<Stream> PlayerRemoved;
 
-        private readonly TcpClient _tcpClient;
-        private NetworkStream _networkStream;
+        private readonly ClientWebSocket _webSocket;
+        private readonly string _gameName;
+        private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
 
-        private Matchmaker(TcpClient tcpClient)
+        private Matchmaker(ClientWebSocket webSocket, string gameName)
         {
-            _tcpClient = tcpClient;
+            _webSocket = webSocket;
+            _gameName = gameName;
         }
 
-        public static async Task<Matchmaker> Create(string host, int port)
+        public static async Task<Matchmaker> Create(Uri uri, string gameName)
         {
-            var tcpClient = new TcpClient();
-            await tcpClient.ConnectAsync(host, port);
+            var webSocket = new ClientWebSocket();
+            await webSocket.ConnectAsync(uri, CancellationToken.None);
 
-            var matchmaker = new Matchmaker(tcpClient);
+            var matchmaker = new Matchmaker(webSocket, gameName);
             _ = matchmaker.MainLoop();
 
             return matchmaker;
         }
 
-        private void SendToIds(ICollection<string> ids, string message)
-        {
-            async void Send()
+        private void SendToIds(ICollection<string> ids, string message) =>
+            _ = SendObjectAsync(new
             {
-                try
+                Message = new
                 {
-                    await _networkStream.WriteString(JsonConvert.SerializeObject(new
-                    {
-                        Message = new
-                        {
-                            target = ids.Count == 1
-                                ? (object) new {Id = ids.Single()}
-                                : (object) new {Ids = ids},
-                            message
-                        }
-                    }));
+                    target = ids.Count == 1
+                        ? (object) new { Id = ids.Single() }
+                        : (object) new { Ids = ids },
+                    message
                 }
-                catch (Exception e)
-                {
-                    Debug.LogException(e);
-                }
-            }
-
-            Send();
-        }
+            });
 
         public void SendMessage(IEnumerable<Stream> players, string message)
         {
@@ -114,29 +126,67 @@ namespace Quiz.Network
         }
 
         public void Broadcast(string message) =>
-            _ = _networkStream.WriteString(JsonConvert.SerializeObject(new
+            _ = SendObjectAsync(new
             {
                 Message = new
                 {
                     target = "Broadcast",
                     message
                 }
-            }));
+            });
 
-        public void KickPlayer(Stream stream) =>
-            _ = _networkStream.WriteString(JsonConvert.SerializeObject(new {KickPlayer = stream.Id}));
+        public void KickPlayer(Stream stream) => _ = SendObjectAsync(new { KickPlayer = stream.Id });
+
+        private async Task SendStringAsync(string text)
+        {
+            await _sendLock.WaitAsync();
+
+            try {
+                await _webSocket.SendAsync(
+                    buffer: new ArraySegment<byte>(Encoding.UTF8.GetBytes(text)),
+                    messageType: WebSocketMessageType.Text,
+                    endOfMessage: true,
+                    CancellationToken.None);
+            } finally {
+                _sendLock.Release();
+            }
+        }
+
+        private Task SendObjectAsync(object obj) => SendStringAsync(JsonConvert.SerializeObject(obj));
+        private Task Login(string gameName) => SendObjectAsync(new { Login = gameName });
+
+        private async Task<string> ReadStringAsync()
+        {
+            var buffer = new ArraySegment<byte>(new byte[8192]);
+
+            using (var ms = new MemoryStream())
+            {
+                WebSocketReceiveResult result;
+
+                do
+                {
+                    result = await _webSocket.ReceiveAsync(buffer, CancellationToken.None);
+                    ms.Write(buffer.Array, buffer.Offset, result.Count);
+                }
+                while (!result.EndOfMessage);
+
+                ms.Seek(0, SeekOrigin.Begin);
+
+                using (var reader = new StreamReader(ms, Encoding.UTF8))
+                    return reader.ReadToEnd();
+            }
+        }
 
         private async Task MainLoop()
         {
-            using (_networkStream = _tcpClient.GetStream())
-            {
-                await _networkStream.WriteString(@"{ ""Login"": ""SVOYAIGRA"" }");
+            using (_webSocket) {
+                await Login(_gameName);
 
                 while (true)
                 {
                     try
                     {
-                        var matchmakerMessage = await _networkStream.ReadString();
+                        var matchmakerMessage = await ReadStringAsync();
 
                         Debug.Log("Message: " + matchmakerMessage);
 
@@ -155,19 +205,32 @@ namespace Quiz.Network
                                 PlayerAdded?.Invoke(player);
                             }
                         }
-                        else if (!string.IsNullOrEmpty(response.PlayerConnected))
+                        else if (!string.IsNullOrEmpty(response.PlayerJoined))
                         {
-                            var player = new Stream(response.PlayerConnected, true, this);
+                            var player = new Stream(response.PlayerJoined, true, this);
 
                             Players.Add(player);
                             PlayerAdded?.Invoke(player);
+                        }
+                        else if (!string.IsNullOrEmpty(response.PlayerLeft))
+                        {
+                            var player = Players.FirstOrDefault(x => x.Id == response.PlayerLeft);
+
+                            Players.Remove(player);
+                            PlayerRemoved?.Invoke(player);
+                        }
+                        else if (!string.IsNullOrEmpty(response.PlayerConnected)) {
+                            var player = Players.FirstOrDefault(x => x.Id == response.PlayerConnected);
+
+                            if (player != null)
+                                player.Online = true;
                         }
                         else if (!string.IsNullOrEmpty(response.PlayerDisconnected))
                         {
                             var player = Players.FirstOrDefault(x => x.Id == response.PlayerDisconnected);
 
-                            Players.Remove(player);
-                            PlayerRemoved?.Invoke(player);
+                            if (player != null)
+                                player.Online = false;
                         }
                         else if (response.PlayerMessage != null)
                         {
@@ -177,9 +240,9 @@ namespace Quiz.Network
                                 ?.Invoke(innerMessage);
                         }
                     }
-                    catch (IOException ioException)
+                    catch (WebSocketException socketException)
                     {
-                        Debug.LogError("Matchmaker has been disconnected: " + ioException.Message);
+                        Debug.LogError("Matchmaker has been disconnected: " + socketException.Message);
                         throw;
                     }
                     catch (Exception e)

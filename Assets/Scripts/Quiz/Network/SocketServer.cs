@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Sockets;
+using UnityEngine;
 
 namespace Quiz.Network
 {
@@ -21,10 +22,13 @@ namespace Quiz.Network
 
         public static async void Init()
         {
-            var matchmaker = await Matchmaker.Create(Host, Port);
-
-            matchmaker.PlayerAdded += player => _ = new Player(player);
-            matchmaker.PlayerRemoved += stream => OnPlayerDisconnected?.Invoke(stream);
+            try {
+                var matchmaker = await Matchmaker.Create(new Uri("ws://" + Host + ":" + Port), "SVOYAIGRA");
+                matchmaker.PlayerAdded += player => _ = new Player(player);
+                matchmaker.PlayerRemoved += stream => OnPlayerDisconnected?.Invoke(stream);
+            } catch (Exception e) {
+                Debug.LogException(e);
+            }
         }
     }
 }

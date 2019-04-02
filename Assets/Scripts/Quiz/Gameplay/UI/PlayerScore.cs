@@ -17,6 +17,7 @@ namespace Quiz.Gameplay.UI
 
         [SerializeField] private Color _defaultBackgroundColor = default;
         [SerializeField] private Color _blinkBackgroundColor = default;
+        [SerializeField] private Color _offlineBackgroundColor = default;
 
 //        [SerializeField] private Color _defaultLabelColor = default;
         [SerializeField] private CanvasGroup _canvasGroup = default;
@@ -66,6 +67,9 @@ namespace Quiz.Gameplay.UI
                             () => { }));
                     }));
             };
+
+            _player.OnlineStatusChanged += online
+                => _background.color = online ? _defaultBackgroundColor : _offlineBackgroundColor;
 
             _player.OnSetAsDecisionMaker += arg =>
             {

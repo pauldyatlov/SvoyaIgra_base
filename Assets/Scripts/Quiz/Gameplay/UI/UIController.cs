@@ -9,14 +9,14 @@ namespace Quiz.Gameplay.UI
     // ReSharper disable once InconsistentNaming
     public class UIController : MonoBehaviour
     {
-        [SerializeField] private RoundScreen _roundScreenTemplate;
-        [SerializeField] private RectTransform _roundContainer;
+        [SerializeField] private RoundScreen _roundScreenTemplate = default;
+        [SerializeField] private RectTransform _roundContainer = default;
 
-        [SerializeField] private PlayerScore _playerScoreTemplate;
-        [SerializeField] private RectTransform _scoreContainer;
+        [SerializeField] private PlayerScore _playerScoreTemplate = default;
+        [SerializeField] private RectTransform _scoreContainer = default;
 
-        [SerializeField] private TaskScreen _taskScreen;
-        [SerializeField] private SetScoreWindow _setScoreWindow;
+        [SerializeField] private TaskScreen _taskScreen = default;
+        [SerializeField] private SetScoreWindow _setScoreWindow = default;
 
         public event Action<Player> PlayerAnswering;
 
