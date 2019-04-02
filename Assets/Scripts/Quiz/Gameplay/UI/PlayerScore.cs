@@ -19,7 +19,9 @@ namespace Quiz.Gameplay.UI
         [SerializeField] private Color _blinkBackgroundColor = default;
         [SerializeField] private Color _offlineBackgroundColor = default;
 
-//        [SerializeField] private Color _defaultLabelColor = default;
+        [SerializeField] private Color _defaultLabelColor = default;
+        [SerializeField] private Color _offlineLabelColor = default;
+
         [SerializeField] private CanvasGroup _canvasGroup = default;
         [SerializeField] private Button _closeButton = default;
 
@@ -68,12 +70,12 @@ namespace Quiz.Gameplay.UI
                     }));
             };
 
-            _player.OnlineStatusChanged += online
-                => _background.color = online ? _defaultBackgroundColor : _offlineBackgroundColor;
+            _player.OnlineStatusChanged += SetConnectedStatus;
 
             _player.OnSetAsDecisionMaker += arg =>
             {
-                _decisionMakerMarker.SetActive(arg);
+                if (_decisionMakerMarker != null)
+                    _decisionMakerMarker.SetActive(arg);
             };
         }
 
@@ -82,13 +84,15 @@ namespace Quiz.Gameplay.UI
             _canvasGroup.alpha = value ? 1 : 0.3f;
         }
 
-//        public void SetConnectedStatus(bool value)
-//        {
-//            _canvasGroup.SetStatus(value);
-//
-//            _nameLabel.color = value ? _defaultLabelColor : Color.red;
-//            _pointsLabel.color = value ? _defaultLabelColor : Color.red;
-//        }
+        public void SetConnectedStatus(bool online)
+        {
+            SetCanvasGroup(online);
+
+            _background.color = online ? _defaultBackgroundColor : _offlineBackgroundColor;
+
+            _nameLabel.color = online ? _defaultLabelColor : _offlineLabelColor;
+            _pointsLabel.color = online ? _defaultLabelColor : _offlineLabelColor;
+        }
 
         public override void OnPointerClick(PointerEventData eventData)
         {

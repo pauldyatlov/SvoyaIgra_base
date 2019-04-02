@@ -4,10 +4,10 @@ namespace Quiz.Gameplay
 {
     public class SoundManager : MonoBehaviour
     {
-        [SerializeField] private AudioSource _audioSource;
+        [SerializeField] private AudioSource _audioSource = default;
 
-        [SerializeField] private AudioClip _roundBegin;
-        [SerializeField] private AudioClip _noAnswer;
+        [SerializeField] private AudioClip _roundBegin = default;
+        [SerializeField] private AudioClip _noAnswer = default;
 
         public static SoundManager Instance { get; private set; }
 
