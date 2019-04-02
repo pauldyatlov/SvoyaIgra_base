@@ -1174,6 +1174,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: TaskScreen
       objectReference: {fileID: 0}
+    - target: {fileID: 108362, guid: ad8a0c3ab28ce8a4bac9024a8366d670, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 11414510, guid: ad8a0c3ab28ce8a4bac9024a8366d670, type: 3}
       propertyPath: _themesGameObject
       value: 
@@ -1271,6 +1275,24 @@ PrefabInstance:
     - target: {fileID: 22403272, guid: ad8a0c3ab28ce8a4bac9024a8366d670, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 97.77197
+      objectReference: {fileID: 0}
+    - target: {fileID: 22403280, guid: ad8a0c3ab28ce8a4bac9024a8366d670, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 87.1875
+      objectReference: {fileID: 0}
+    - target: {fileID: 22403280, guid: ad8a0c3ab28ce8a4bac9024a8366d670, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 88.59375
+      objectReference: {fileID: 0}
+    - target: {fileID: 4225239012848587350, guid: ad8a0c3ab28ce8a4bac9024a8366d670,
+        type: 3}
+      propertyPath: m_havePropertiesChanged
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4225239012848587350, guid: ad8a0c3ab28ce8a4bac9024a8366d670,
+        type: 3}
+      propertyPath: m_isInputParsingRequired
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ad8a0c3ab28ce8a4bac9024a8366d670, type: 3}
