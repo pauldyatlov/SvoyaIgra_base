@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 21d5bfe91f35f8a4090ba06098be3c5f, type: 3}
-  m_Name: Plan
+  m_Name: Plan_test
   m_EditorClassIdentifier: 
   RoundsList:
   - ThemesList:
@@ -22,10 +22,10 @@ MonoBehaviour:
         Picture: {fileID: 21300000, guid: e449fac1672eaad4da7bcf13098c3abc, type: 3}
         Audio: {fileID: 0}
         Video: {fileID: 0}
-        IsCatInPoke: 0
+        IsCatInPoke: 1
         CatInPoke:
-          Theme: 
-          Price: 0
+          Theme: babab
+          Price: 200
       - Price: 100
         Question: 
         Answer: 

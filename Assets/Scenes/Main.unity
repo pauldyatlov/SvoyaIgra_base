@@ -482,6 +482,21 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.x
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 114367054823126294, guid: abeb3a44dbbdba3409f79358245674ae,
+        type: 3}
+      propertyPath: _container
+      value: 
+      objectReference: {fileID: 988851033}
+    - target: {fileID: 114367054823126294, guid: abeb3a44dbbdba3409f79358245674ae,
+        type: 3}
+      propertyPath: _playerScoreTemplate
+      value: 
+      objectReference: {fileID: 11484700, guid: 66f8f973a8e61e04ea2a60cb7f7030e2,
+        type: 3}
+    - target: {fileID: 1484189060445468, guid: abeb3a44dbbdba3409f79358245674ae, type: 3}
+      propertyPath: m_Name
+      value: PlayerScores
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: abeb3a44dbbdba3409f79358245674ae, type: 3}
 --- !u!1 &940842199
@@ -589,6 +604,12 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!224 &988851033 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 224534486861890318, guid: abeb3a44dbbdba3409f79358245674ae,
+    type: 3}
+  m_PrefabInstance: {fileID: 910480905}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &1145088296 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 114367054823126294, guid: abeb3a44dbbdba3409f79358245674ae,

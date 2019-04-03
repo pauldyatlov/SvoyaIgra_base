@@ -59,8 +59,8 @@ namespace Quiz.Gameplay.UI
                 _catInPokePlayer = null;
 
                 _catInPokeScreen.Show(
+                    _uiController.PlayerViews.Keys.ToList(),
                     plan.CatInPoke,
-//                    Engine.RegisteredPlayers.ToList(),
                     player =>
                     {
                         Display();
@@ -218,7 +218,9 @@ namespace Quiz.Gameplay.UI
             {
                 for (var i = 0; i < time; i++)
                 {
-                    _timerLabel.text = (time - i).ToString(CultureInfo.InvariantCulture);
+                    _timerLabel.text = time >= 1
+                        ? (time - i).ToString(CultureInfo.InvariantCulture)
+                        : string.Empty;
 
                     yield return new WaitForSeconds(1);
 
