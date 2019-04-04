@@ -16,6 +16,7 @@ namespace Quiz.Gameplay.UI
         private RoundPlan _plan;
         private Action<QuestionPlan> _onQuestionSelected;
         private Action<RoundPlan> _onThemesEnded;
+        private UIController _uiController;
 
         private void Awake()
         {
@@ -27,8 +28,10 @@ namespace Quiz.Gameplay.UI
             });
         }
 
-        public void Show(RoundPlan plan, Action<QuestionPlan> onQuestionSelected, Action<RoundPlan> onThemesEnded)
+        public void Show(UIController controller, RoundPlan plan, Action<QuestionPlan> onQuestionSelected,
+            Action<RoundPlan> onThemesEnded)
         {
+            _uiController = controller;
             _startRoundButton.gameObject.SetActive(true);
 
             _plan = plan;
@@ -47,6 +50,8 @@ namespace Quiz.Gameplay.UI
 
                 _themes.Add(theme, themePanel);
             }
+
+            _uiController.SetDecisionMaker();
         }
 
         private void RemoveTheme(ThemePlan theme)

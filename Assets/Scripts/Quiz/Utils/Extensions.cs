@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -27,6 +29,14 @@ namespace Quiz
             canvasGroup.alpha = status ? 1 : 0;
             canvasGroup.interactable = status;
             canvasGroup.blocksRaycasts = status;
+        }
+
+        public static T PickRandom<T>(this IEnumerable<T> enumerable)
+        {
+            var array = enumerable as T[] ?? enumerable.ToArray();
+            var index = Random.Range(0, array.Length);
+
+            return array.ElementAt(index);
         }
     }
 }

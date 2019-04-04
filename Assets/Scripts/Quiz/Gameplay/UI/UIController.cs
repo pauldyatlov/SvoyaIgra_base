@@ -37,7 +37,7 @@ namespace Quiz.Gameplay.UI
             {
                 var round = plan.RoundsList[i];
                 var roundScreen = Instantiate(_roundScreenTemplate, _roundContainer);
-                roundScreen.Show(round, question => { _taskScreen.Show(question, this); },
+                roundScreen.Show(this, round, question => { _taskScreen.Show(question, this); },
                     RemoveRound);
 
                 if (i == 0)
@@ -56,8 +56,6 @@ namespace Quiz.Gameplay.UI
 
             _currentRound++;
             _rounds[_currentRound].ShowGameObject();
-
-            SetDecisionMaker(PlayerViews.OrderBy(x => x.Key.Points).FirstOrDefault().Key);
         }
 
         private void OnPlayerSelected(Player player)
@@ -81,7 +79,6 @@ namespace Quiz.Gameplay.UI
             }
 
             view.Value.HideGameObject();
-
             PlayerViews.Remove(view.Key);
         }
 
@@ -104,6 +101,22 @@ namespace Quiz.Gameplay.UI
             }
 
             PlayerAnswering?.Invoke(player.Key);
+        }
+
+        public void SetDecisionMaker()
+        {
+            var smallestCountPlayer = PlayerViews.OrderBy(x => x.Key.Points).FirstOrDefault().Key;
+            var smallestCount = smallestCountPlayer.Points;
+
+            var sameCountPlayers = PlayerViews.Where(x => x.Key.Points == smallestCount && x.Key.Online).ToArray();
+
+            if (sameCountPlayers.Length > 1)
+            {
+                SetDecisionMaker(sameCountPlayers.PickRandom().Key);
+                return;
+            }
+
+            SetDecisionMaker(smallestCountPlayer);
         }
 
         public void SetDecisionMaker(Player player)
