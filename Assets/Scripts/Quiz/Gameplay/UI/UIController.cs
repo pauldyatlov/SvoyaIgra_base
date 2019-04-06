@@ -106,8 +106,11 @@ namespace Quiz.Gameplay.UI
         public void SetDecisionMaker()
         {
             var smallestCountPlayer = PlayerViews.OrderBy(x => x.Key.Points).FirstOrDefault().Key;
-            var smallestCount = smallestCountPlayer.Points;
 
+            if (smallestCountPlayer == null)
+                return;
+
+            var smallestCount = smallestCountPlayer.Points;
             var sameCountPlayers = PlayerViews.Where(x => x.Key.Points == smallestCount && x.Key.Online).ToArray();
 
             if (sameCountPlayers.Length > 1)

@@ -179,7 +179,8 @@ namespace Quiz.Network
 
         private async Task MainLoop()
         {
-            using (_webSocket) {
+            using (_webSocket)
+            {
                 await Login(_gameName);
 
                 while (true)
@@ -235,7 +236,7 @@ namespace Quiz.Network
                         else if (response.PlayerMessage != null)
                         {
                             var innerMessage = response.PlayerMessage.text.Replace("\\\"", "\"");
-                            Debug.LogWarning("Inner message: " + innerMessage);
+                            Debug.Log("[Inner] message: " + innerMessage);
                             Players.Single(x => x.Id == response.PlayerMessage.id).MessageReceived
                                 ?.Invoke(innerMessage);
                         }

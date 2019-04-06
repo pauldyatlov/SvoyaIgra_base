@@ -31,13 +31,16 @@ namespace Quiz.Gameplay.UI
         private QuestionPlan _plane;
         private Player _answeringPlayer;
 
-        private const int MinTimer = 15;
+        private const int MinTimer = 12;
         private bool _canAcceptAnswers;
-        private Coroutine _timeCoroutine;
         private Player _catInPokePlayer;
         private UIController _uiController;
 
         private int QuestionPrice => _plane.CatInPoke.Price > 0 ? _plane.CatInPoke.Price : _plane.Price;
+
+        private float _timeLeft;
+        private bool _countdown;
+        private List<Player> _countedPlayers = new List<Player>();
 
         private void Awake()
         {
@@ -50,6 +53,7 @@ namespace Quiz.Gameplay.UI
         public void Show(QuestionPlan plan, UIController controller)
         {
             _canAcceptAnswers = false;
+            _timeLeft = MinTimer;
 
             _plane = plan;
             _uiController = controller;
@@ -116,34 +120,41 @@ namespace Quiz.Gameplay.UI
                 CanAnswerHandler();
         }
 
-        private void HandlePlayerAnswering(Player arg)
+        private void HandlePlayerAnswering(Player player)
         {
-            if (!_canAcceptAnswers || _answeringPlayer != null || _failedPlayers.Contains(arg))
+            _countedPlayers.Add(player);
+
+            foreach (var idlePlayer in _uiController.PlayerViews)
+            {
+                if (_countedPlayers.Contains(idlePlayer.Key))
+                {
+                    idlePlayer.Value.SetCountdown(false);
+                    idlePlayer.Value.LatencyLabelVisible(true);
+
+                    continue;
+                }
+
+                if (_answeringPlayer == null)
+                    idlePlayer.Value.SetCountdown(true);
+            }
+
+            if (!_canAcceptAnswers || _answeringPlayer != null || _failedPlayers.Contains(player))
                 return;
 
-            _answeringPlayer = arg;
+            _answeringPlayer = player;
 
             _acceptButton.gameObject.SetActive(true);
             _declineButton.gameObject.SetActive(true);
 
-            Time.timeScale = 0.0f;
+            _countdown = false;
             _audioSource.Pause();
 
-            SetAsAnswering(arg, true);
-        }
-
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.F5) && Input.GetKey(KeyCode.LeftControl))
-                CanAnswerHandler();
+            SetAsAnswering(player, true);
         }
 
         private void CanAnswerHandler()
         {
-            if (_timeCoroutine != null)
-                StopCoroutine(_timeCoroutine);
-
-            _timeCoroutine = StartCoroutine(Co_RoundTimer(_plane.IsCatInPoke ? 0.1f : MinTimer));
+            StartTimer();
 
             _canAnswerButton.gameObject.SetActive(false);
 
@@ -163,7 +174,7 @@ namespace Quiz.Gameplay.UI
             _answeringPlayer.UpdatePoints(QuestionPrice);
             _uiController.SetDecisionMaker(_answeringPlayer);
 
-            Time.timeScale = 1.0f;
+            _countdown = true;
             _audioSource.UnPause();
 
             _answeringPlayer.SendMessage(new QuizCommand
@@ -179,12 +190,14 @@ namespace Quiz.Gameplay.UI
 
         private void IncorrectAnswer()
         {
+            ClearCounter();
+
             _failedPlayers.Add(_answeringPlayer);
 
             SetAsAnswering(_answeringPlayer, false);
             _answeringPlayer.UpdatePoints(-QuestionPrice);
 
-            Time.timeScale = 1.0f;
+            _countdown = true;
             _audioSource.UnPause();
 
             _acceptButton.gameObject.SetActive(false);
@@ -212,28 +225,51 @@ namespace Quiz.Gameplay.UI
                 registeredPlayer.Value.SetCanvasGroup(value);
         }
 
-        private IEnumerator Co_RoundTimer(float time)
+        private void Update()
         {
-            while (true)
-            {
-                for (var i = 0; i < time; i++)
-                {
-                    _timerLabel.text = time >= 1
-                        ? (time - i).ToString(CultureInfo.InvariantCulture)
-                        : string.Empty;
+            if (Input.GetKeyDown(KeyCode.F5) && Input.GetKey(KeyCode.LeftControl))
+                CanAnswerHandler();
 
-                    yield return new WaitForSeconds(1);
+            if (!_countdown)
+                return;
 
-                    if (i == 10)
-                        SoundManager.Instance.PlayNoAnswer();
-                }
+            _timerLabel.text = _timeLeft.ToString("0.0");
 
+            _timeLeft -= Time.deltaTime;
+
+            if (_timeLeft <= 3)
+                SoundManager.Instance.PlayNoAnswer();
+
+            if (_timeLeft <= 0)
                 Close();
+        }
+
+        private void StartTimer()
+        {
+            _timeLeft = MinTimer;
+            _countdown = true;
+        }
+
+        private void StopTimer()
+        {
+            _timeLeft = 0;
+            _countdown = false;
+        }
+
+        private void ClearCounter()
+        {
+            foreach (var idlePlayer in _uiController.PlayerViews)
+            {
+                idlePlayer.Value.SetCountdown(false);
+                idlePlayer.Value.LatencyLabelVisible(false);
             }
         }
 
         private void Close()
         {
+            ClearCounter();
+            _countedPlayers.Clear();
+
             if (_answeringPlayer != null)
                 IncorrectAnswer();
 
@@ -245,6 +281,7 @@ namespace Quiz.Gameplay.UI
             _themesGameObject.SetActive(true);
 
             HideGameObject();
+            StopTimer();
         }
     }
 }

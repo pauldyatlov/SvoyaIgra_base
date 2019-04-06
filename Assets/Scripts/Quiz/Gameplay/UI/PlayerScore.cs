@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using Quiz.Network;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -22,6 +23,7 @@ namespace Quiz.Gameplay.UI
         [SerializeField] private Color _defaultLabelColor = default;
         [SerializeField] private Color _offlineLabelColor = default;
 
+        [SerializeField] private TextMeshProUGUI _latencyLabel = default;
         [SerializeField] private CanvasGroup _canvasGroup = default;
         [SerializeField] private Button _closeButton = default;
 
@@ -29,6 +31,9 @@ namespace Quiz.Gameplay.UI
         private event Action<Player> OnPlayerKicked;
 
         private Player _player;
+
+        private bool _countdown;
+        private float _latency;
 
         private void Awake()
         {
@@ -81,6 +86,12 @@ namespace Quiz.Gameplay.UI
 
         public void SetCanvasGroup(bool value)
         {
+            if (!_player.Online)
+            {
+                _canvasGroup.alpha = 0.3f;
+                return;
+            }
+
             _canvasGroup.alpha = value ? 1 : 0.3f;
         }
 
@@ -109,6 +120,38 @@ namespace Quiz.Gameplay.UI
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+        }
+
+        private void Update()
+        {
+            if (!_countdown)
+                return;
+
+            _latency += Time.deltaTime;
+
+            DisplayLatency();
+        }
+
+        private void DisplayLatency()
+        {
+            var latency = _latency * 1000;
+
+            _latencyLabel.text = latency > 0 ? latency.ToString("0") + "ms" : string.Empty;
+        }
+
+        public void SetCountdown(bool value)
+        {
+            _countdown = value;
+
+            DisplayLatency();
+        }
+
+        public void LatencyLabelVisible(bool value)
+        {
+            if (!value)
+                _latency = 0f;
+
+            _latencyLabel.gameObject.SetActive(value);
         }
 
         private IEnumerator Co_ChangeColorTemporary(float duration, Color from, Color to, Action callback)
