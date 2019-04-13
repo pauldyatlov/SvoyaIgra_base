@@ -17,7 +17,7 @@ namespace Quiz.Gameplay.UI
 
         private Action<Player> _callback;
 
-        public void Show(List<Player> players, CatInPoke question, Action<Player> callback)
+        public void Show(IEnumerable<Player> players, CatInPoke question, Action<Player> callback)
         {
             gameObject.SetActive(true);
 
@@ -34,9 +34,9 @@ namespace Quiz.Gameplay.UI
             }
         }
 
-        public void Close()
+        public override void Close()
         {
-            gameObject.SetActive(false);
+            HideGameObject();
 
             foreach (var player in _playersList)
                 Destroy(player.gameObject);

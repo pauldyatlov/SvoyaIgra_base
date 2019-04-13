@@ -10,18 +10,21 @@ namespace Quiz.Gameplay.UI
     public class TaskScreen : UIElement
     {
         [SerializeField] private GameObject _themesGameObject = default;
-        [SerializeField] private CatInPokeScreen _catInPokeScreen = default;
         [SerializeField] private AudioSource _audioSource = default;
         [SerializeField] private StreamVideo _videoPlayer = default;
 
+        [SerializeField] private TimerPanel _questionTimerPanel = default;
+        [SerializeField] private TimerPanel _playerTimerPanel = default;
+
+        [SerializeField] private TimerCounter _timerCounter = default;
+
+        [SerializeField] private CatInPokeScreen _catInPokeScreen = default;
         [SerializeField] private Text _answeringPlayerLabel = default;
-        [SerializeField] private Text _timerLabel = default;
         [SerializeField] private Text _label = default;
         [SerializeField] private Image _image = default;
 
         [SerializeField] private Button _acceptButton = default;
         [SerializeField] private Button _declineButton = default;
-
         [SerializeField] private Button _canAnswerButton = default;
 
         private readonly List<Player> _failedPlayers = new List<Player>();
@@ -31,6 +34,8 @@ namespace Quiz.Gameplay.UI
         private Player _answeringPlayer;
 
         private const int MinTimer = 12;
+        private const int PlayerAnswerTimer = 10;
+
         private bool _canAcceptAnswers;
         private Player _catInPokePlayer;
         private UIController _uiController;
@@ -38,9 +43,8 @@ namespace Quiz.Gameplay.UI
         private int QuestionPrice => _plane.CatInPoke.Price > 0 ? _plane.CatInPoke.Price : _plane.Price;
         private readonly List<Player> _countedPlayers = new List<Player>();
 
-        private float _timeLeft;
-        private bool _countdown;
-        private bool _noAnswerPlayed;
+        private QuizTimer _questionTimer;
+        private QuizTimer _playerTimer;
 
         private void Awake()
         {
@@ -53,10 +57,15 @@ namespace Quiz.Gameplay.UI
         public void Show(QuestionPlan plan, UIController controller)
         {
             _canAcceptAnswers = false;
-            _timeLeft = MinTimer;
 
             _plane = plan;
             _uiController = controller;
+
+            _questionTimer = new QuizTimer(MinTimer, _questionTimerPanel, true, new[]
+            {
+                new QuizThreshold(3, () => { SoundManager.Instance.PlayNoAnswer(); }),
+                new QuizThreshold(0, Close)
+            });
 
             if (plan.IsCatInPoke)
             {
@@ -112,7 +121,8 @@ namespace Quiz.Gameplay.UI
             _answeringPlayerLabel.text = "";
             _answeringPlayer = null;
 
-            _timerLabel.text = MinTimer.ToString(CultureInfo.InvariantCulture);
+            _timerCounter.Show();
+            _timerCounter.RunTimer(_questionTimer);
 
             _uiController.PlayerAnswering += HandlePlayerAnswering;
 
@@ -144,20 +154,26 @@ namespace Quiz.Gameplay.UI
             if (_answeringPlayer != null || _failedPlayers.Contains(player))
                 return;
 
-            _answeringPlayer = player;
+            _playerTimer = new QuizTimer(PlayerAnswerTimer, _playerTimerPanel, false, new []
+            {
+                new QuizThreshold(0, IncorrectAnswer),
+            });
+
+            _timerCounter.RunTimer(_playerTimer);
 
             _acceptButton.gameObject.SetActive(true);
             _declineButton.gameObject.SetActive(true);
 
-            _countdown = false;
+            _questionTimer.Pause();
             _audioSource.Pause();
 
-            SetAsAnswering(player, true);
+            _answeringPlayer = player;
+            SetAsAnswering(_answeringPlayer, true);
         }
 
         private void CanAnswerHandler()
         {
-            StartTimer();
+            _questionTimer.Unpause();
 
             _canAnswerButton.gameObject.SetActive(false);
 
@@ -177,7 +193,7 @@ namespace Quiz.Gameplay.UI
             _answeringPlayer.UpdatePoints(QuestionPrice);
             _uiController.SetDecisionMaker(_answeringPlayer);
 
-            _countdown = true;
+            _questionTimer.Unpause();
             _audioSource.UnPause();
 
             _answeringPlayer.SendMessage(new QuizCommand
@@ -185,6 +201,9 @@ namespace Quiz.Gameplay.UI
                 Command = SocketServer.CorrectAnswer,
                 Parameter = QuestionPrice.ToString()
             });
+
+            _playerTimer?.Stop();
+            _playerTimer = null;
 
             _answeringPlayer = null;
 
@@ -200,7 +219,7 @@ namespace Quiz.Gameplay.UI
             SetAsAnswering(_answeringPlayer, false);
             _answeringPlayer.UpdatePoints(-QuestionPrice);
 
-            _countdown = true;
+            _questionTimer.Unpause();
             _audioSource.UnPause();
 
             _acceptButton.gameObject.SetActive(false);
@@ -211,6 +230,9 @@ namespace Quiz.Gameplay.UI
                 Command = SocketServer.WrongAnswer,
                 Parameter = (-QuestionPrice).ToString()
             });
+
+            _playerTimer?.Stop();
+            _playerTimer = null;
 
             _answeringPlayer = null;
         }
@@ -228,40 +250,6 @@ namespace Quiz.Gameplay.UI
                 registeredPlayer.Value.SetCanvasGroup(value);
         }
 
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.F5) && Input.GetKey(KeyCode.LeftControl))
-                CanAnswerHandler();
-
-            if (!_countdown)
-                return;
-
-            _timerLabel.text = _timeLeft.ToString("0.0");
-
-            _timeLeft -= Time.deltaTime;
-
-            if (_timeLeft <= 3 && !_noAnswerPlayed)
-            {
-                _noAnswerPlayed = true;
-                SoundManager.Instance.PlayNoAnswer();
-            }
-
-            if (_timeLeft <= 0)
-                Close();
-        }
-
-        private void StartTimer()
-        {
-            _timeLeft = MinTimer;
-            _countdown = true;
-        }
-
-        private void StopTimer()
-        {
-            _timeLeft = 0;
-            _countdown = false;
-        }
-
         private void ClearCounter()
         {
             foreach (var idlePlayer in _uiController.PlayerViews)
@@ -271,7 +259,7 @@ namespace Quiz.Gameplay.UI
             }
         }
 
-        private void Close()
+        public override void Close()
         {
             ClearCounter();
             _countedPlayers.Clear();
@@ -285,11 +273,12 @@ namespace Quiz.Gameplay.UI
             _uiController.PlayerAnswering -= HandlePlayerAnswering;
 
             _themesGameObject.SetActive(true);
+            _timerCounter.Close();
 
-            HideGameObject();
-            StopTimer();
+            _playerTimer?.Stop();
+            _playerTimer = null;
 
-            _noAnswerPlayed = false;
+            base.Close();
         }
     }
 }

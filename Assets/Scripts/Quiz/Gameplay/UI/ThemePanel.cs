@@ -51,7 +51,7 @@ namespace Quiz.Gameplay.UI
                 _onQuestionsEnded.Invoke(_plan);
         }
 
-        public void Close()
+        public override void Close()
         {
             _canvasGroup.SetStatus(false);
         }

@@ -41,7 +41,7 @@ namespace Quiz.Gameplay.UI
             _background.SetActive(false);
         }
 
-        public void Close()
+        public override void Close()
         {
             _canvasGroup.SetStatus(false);
         }
