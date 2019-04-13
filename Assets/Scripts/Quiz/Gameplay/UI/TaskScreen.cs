@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Globalization;
 using Quiz.Network;
 using System.Linq;
@@ -37,10 +36,11 @@ namespace Quiz.Gameplay.UI
         private UIController _uiController;
 
         private int QuestionPrice => _plane.CatInPoke.Price > 0 ? _plane.CatInPoke.Price : _plane.Price;
+        private readonly List<Player> _countedPlayers = new List<Player>();
 
         private float _timeLeft;
         private bool _countdown;
-        private List<Player> _countedPlayers = new List<Player>();
+        private bool _noAnswerPlayed;
 
         private void Awake()
         {
@@ -122,6 +122,9 @@ namespace Quiz.Gameplay.UI
 
         private void HandlePlayerAnswering(Player player)
         {
+            if (!_canAcceptAnswers)
+                return;
+
             _countedPlayers.Add(player);
 
             foreach (var idlePlayer in _uiController.PlayerViews)
@@ -138,7 +141,7 @@ namespace Quiz.Gameplay.UI
                     idlePlayer.Value.SetCountdown(true);
             }
 
-            if (!_canAcceptAnswers || _answeringPlayer != null || _failedPlayers.Contains(player))
+            if (_answeringPlayer != null || _failedPlayers.Contains(player))
                 return;
 
             _answeringPlayer = player;
@@ -237,8 +240,11 @@ namespace Quiz.Gameplay.UI
 
             _timeLeft -= Time.deltaTime;
 
-            if (_timeLeft <= 3)
+            if (_timeLeft <= 3 && !_noAnswerPlayed)
+            {
+                _noAnswerPlayed = true;
                 SoundManager.Instance.PlayNoAnswer();
+            }
 
             if (_timeLeft <= 0)
                 Close();
@@ -282,6 +288,8 @@ namespace Quiz.Gameplay.UI
 
             HideGameObject();
             StopTimer();
+
+            _noAnswerPlayed = false;
         }
     }
 }

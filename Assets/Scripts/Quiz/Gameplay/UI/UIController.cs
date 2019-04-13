@@ -18,17 +18,21 @@ namespace Quiz.Gameplay.UI
         [SerializeField] private TaskScreen _taskScreen = default;
         [SerializeField] private SetScoreWindow _setScoreWindow = default;
 
+        [SerializeField] private FinalRoundScreen _finalRoundScreen = default;
+
         public event Action<Player> PlayerAnswering;
 
         public readonly Dictionary<Player, PlayerScore> PlayerViews = new Dictionary<Player, PlayerScore>();
         private readonly Dictionary<int, RoundScreen> _rounds = new Dictionary<int, RoundScreen>();
         private Action<Player> _onPlayerKicked;
 
+        private Plan _plan;
         private int _currentRound;
         private Player _decisionMaker;
 
         public void Show(Plan plan, Action<Player> onPlayerKicked)
         {
+            _plan = plan;
             _onPlayerKicked = onPlayerKicked;
 
             SocketServer.OnPlayerAnswered += OnPlayerAnswering;
@@ -45,8 +49,6 @@ namespace Quiz.Gameplay.UI
 
                 _rounds.Add(i, roundScreen);
             }
-
-            _currentRound = 0;
         }
 
         private void RemoveRound(RoundPlan round)
@@ -55,7 +57,11 @@ namespace Quiz.Gameplay.UI
             _rounds.Remove(_currentRound);
 
             _currentRound++;
-            _rounds[_currentRound].ShowGameObject();
+
+            if (_currentRound < _plan.RoundsList.Count)
+                _rounds[_currentRound].ShowGameObject();
+            else
+                _finalRoundScreen.Show(_plan.FinalQuestions);
         }
 
         private void OnPlayerSelected(Player player)

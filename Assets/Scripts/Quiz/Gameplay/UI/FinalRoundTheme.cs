@@ -14,10 +14,10 @@ namespace Quiz.Gameplay.UI
 
         public void Show(FinalQuestion question, Action<FinalQuestion> onClick)
         {
+            ShowGameObject();
+
             _question = question;
             _onClick = onClick;
-
-            gameObject.SetActive(true);
 
             _roundName.text = question.Theme;
         }
