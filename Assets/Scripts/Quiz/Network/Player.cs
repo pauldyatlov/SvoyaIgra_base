@@ -69,7 +69,7 @@ namespace Quiz.Network
                 else
                 {
                     if (message.Answer != null)
-                        SocketServer.OnPlayerAnswered?.Invoke(Name);
+                        SocketServer.PlayerAnswer(Name);
 
                     OnButtonPressed?.Invoke();
                 }
@@ -84,7 +84,7 @@ namespace Quiz.Network
                 OnPointsChanged(this);
             };
 
-            SocketServer.OnPlayerConnected?.Invoke(this);
+            SocketServer.PlayerConnect(this);
         }
 
         private string GenerateRandomName()

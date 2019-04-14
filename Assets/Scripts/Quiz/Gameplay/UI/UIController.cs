@@ -2,13 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using Quiz.Network;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Quiz.Gameplay.UI
 {
     // ReSharper disable once InconsistentNaming
-    public class UIController : MonoBehaviour
+    public class UIController : UIElement
     {
+        [SerializeField] private SetRoomScreen _setRoomScreen = default;
+        [SerializeField] private TextMeshProUGUI _roomName = default;
+
         [SerializeField] private RoundScreen _roundScreenTemplate = default;
         [SerializeField] private RectTransform _roundContainer = default;
 
@@ -17,7 +22,6 @@ namespace Quiz.Gameplay.UI
 
         [SerializeField] private TaskScreen _taskScreen = default;
         [SerializeField] private SetScoreWindow _setScoreWindow = default;
-
         [SerializeField] private FinalRoundScreen _finalRoundScreen = default;
 
         public event Action<Player> PlayerAnswering;
@@ -30,7 +34,21 @@ namespace Quiz.Gameplay.UI
         private int _currentRound;
         private Player _decisionMaker;
 
-        public void Show(Plan plan, Action<Player> onPlayerKicked)
+        public void Show(Action<string> onRoomSelected)
+        {
+            _roomName.text = string.Empty;
+
+            ShowGameObject();
+
+            _setRoomScreen.Show(roomName =>
+            {
+                _roomName.text = roomName;
+
+                onRoomSelected(roomName);
+            });
+        }
+
+        public void StartGame(Plan plan, Action<Player> onPlayerKicked)
         {
             _plan = plan;
             _onPlayerKicked = onPlayerKicked;
@@ -41,7 +59,7 @@ namespace Quiz.Gameplay.UI
             {
                 var round = plan.RoundsList[i];
                 var roundScreen = Instantiate(_roundScreenTemplate, _roundContainer);
-                roundScreen.Show(this, round, question => { _taskScreen.Show(question, this); },
+                roundScreen.Show(i, this, round, question => { _taskScreen.Show(question, this); },
                     RemoveRound);
 
                 if (i == 0)

@@ -15,12 +15,15 @@ namespace Quiz.Gameplay
 
         private void Awake()
         {
-            SocketServer.Init();
+            _uiController.Show(roomName =>
+            {
+                SocketServer.Init(roomName);
 
-            SocketServer.OnPlayerConnected += PlayerConnectedHandler;
-            SocketServer.OnPlayerDisconnected += PlayerDisconnectedHandler;
+                SocketServer.OnPlayerConnected += PlayerConnectedHandler;
+                SocketServer.OnPlayerDisconnected += PlayerDisconnectedHandler;
 
-            _uiController.Show(_plan, OnPlayerKicked);
+                _uiController.StartGame(_plan, OnPlayerKicked);
+            });
         }
 
         private void PlayerConnectedHandler(Player player)
@@ -62,6 +65,12 @@ namespace Quiz.Gameplay
         private void OnPlayerKicked(Player player)
         {
             player.Stream.Kick();
+        }
+
+        private void OnApplicationQuit()
+        {
+            SocketServer.OnPlayerConnected -= PlayerConnectedHandler;
+            SocketServer.OnPlayerDisconnected -= PlayerDisconnectedHandler;
         }
     }
 }

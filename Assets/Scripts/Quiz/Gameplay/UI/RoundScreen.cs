@@ -28,15 +28,23 @@ namespace Quiz.Gameplay.UI
             });
         }
 
-        public void Show(UIController controller, RoundPlan plan, Action<QuestionPlan> onQuestionSelected,
+        public void Show(int index, UIController controller, RoundPlan plan, Action<QuestionPlan> onQuestionSelected,
             Action<RoundPlan> onThemesEnded)
         {
             _uiController = controller;
-            _startRoundButton.gameObject.SetActive(true);
-
             _plan = plan;
             _onQuestionSelected = onQuestionSelected;
             _onThemesEnded = onThemesEnded;
+
+            if (index > 0)
+            {
+                _startRoundButton.gameObject.SetActive(true);
+            }
+            else
+            {
+                _startRoundButton.gameObject.SetActive(false);
+                BeginRound();
+            }
         }
 
         private void BeginRound()
