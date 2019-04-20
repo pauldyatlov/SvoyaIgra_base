@@ -25,6 +25,7 @@ namespace Quiz.Gameplay.UI
         [SerializeField] private FinalRoundScreen _finalRoundScreen = default;
 
         public event Action<Player> PlayerAnswering;
+        public VoiceManager VoiceManager;
 
         public readonly Dictionary<Player, PlayerScore> PlayerViews = new Dictionary<Player, PlayerScore>();
         private readonly Dictionary<int, RoundScreen> _rounds = new Dictionary<int, RoundScreen>();
@@ -36,6 +37,8 @@ namespace Quiz.Gameplay.UI
 
         public void Show(Action<string> onRoomSelected)
         {
+            VoiceManager = new VoiceManager();
+
             _roomName.text = string.Empty;
 
             ShowGameObject();
@@ -155,6 +158,11 @@ namespace Quiz.Gameplay.UI
 
             _decisionMaker = player;
             _decisionMaker.OnSetAsDecisionMaker?.Invoke(true);
+        }
+
+        private void OnDisable()
+        {
+            VoiceManager.Close();
         }
     }
 }

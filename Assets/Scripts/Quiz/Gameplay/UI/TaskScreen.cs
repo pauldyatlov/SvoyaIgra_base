@@ -24,23 +24,26 @@ namespace Quiz.Gameplay.UI
         [SerializeField] private Image _image = default;
 
         [SerializeField] private Button _acceptButton = default;
+        [SerializeField] private Button _extraPointsAcceptButton = default;
+        [SerializeField] private Button _lessPointsAcceptButton = default;
+
         [SerializeField] private Button _declineButton = default;
         [SerializeField] private Button _canAnswerButton = default;
 
         private readonly List<Player> _failedPlayers = new List<Player>();
         private bool _paused;
 
-        private QuestionPlan _plane;
+        private QuestionPlan _plan;
         private Player _answeringPlayer;
 
-        private const int MinTimer = 12;
-        private const int PlayerAnswerTimer = 10;
+        private const int MinTimer = 15;
+        private const int PlayerAnswerTimer = 20;
 
         private bool _canAcceptAnswers;
         private Player _catInPokePlayer;
         private UIController _uiController;
 
-        private int QuestionPrice => _plane.CatInPoke.Price > 0 ? _plane.CatInPoke.Price : _plane.Price;
+        private int QuestionPrice => _plan.CatInPoke.Price > 0 ? _plan.CatInPoke.Price : _plan.Price;
         private readonly List<Player> _countedPlayers = new List<Player>();
 
         private QuizTimer _questionTimer;
@@ -48,7 +51,10 @@ namespace Quiz.Gameplay.UI
 
         private void Awake()
         {
-            _acceptButton.onClick.AddListener(CorrectAnswer);
+            _acceptButton.onClick.AddListener(() => { CorrectAnswer(); });
+            _extraPointsAcceptButton.onClick.AddListener(() => { CorrectAnswer(1.5f); });
+            _lessPointsAcceptButton.onClick.AddListener(() => { CorrectAnswer(0.5f); });
+
             _declineButton.onClick.AddListener(IncorrectAnswer);
 
             _canAnswerButton.onClick.AddListener(CanAnswerHandler);
@@ -58,14 +64,15 @@ namespace Quiz.Gameplay.UI
         {
             _canAcceptAnswers = false;
 
-            _plane = plan;
+            _plan = plan;
             _uiController = controller;
 
             _questionTimer = new QuizTimer(MinTimer, _questionTimerPanel, true, new[]
             {
-                new QuizThreshold(3, () => { SoundManager.Instance.PlayNoAnswer(); }),
-                new QuizThreshold(0, Close)
+                new TimerThreshold(3, () => { SoundManager.Instance.PlayNoAnswer(); }),
+                new TimerThreshold(0, Close)
             });
+
 
             if (plan.IsCatInPoke)
             {
@@ -99,6 +106,9 @@ namespace Quiz.Gameplay.UI
             ShowGameObject();
 
             _acceptButton.gameObject.SetActive(false);
+            _extraPointsAcceptButton.gameObject.SetActive(false);
+            _lessPointsAcceptButton.gameObject.SetActive(false);
+
             _declineButton.gameObject.SetActive(false);
             _canAnswerButton.gameObject.SetActive(true);
         }
@@ -107,16 +117,16 @@ namespace Quiz.Gameplay.UI
         {
             _failedPlayers.Clear();
 
-            _label.text = _plane.Question;
+            _label.text = _plan.Question;
             _image.gameObject.SetActive(plan.Picture != null);
 
             if (plan.Picture != null)
                 _image.sprite = plan.Picture;
 
-            _videoPlayer.gameObject.SetActive(_plane.Video != null);
+            _videoPlayer.gameObject.SetActive(_plan.Video != null);
 
-            if (_plane.Video != null)
-                _videoPlayer.Show(_plane.Video);
+            if (_plan.Video != null)
+                _videoPlayer.Show(_plan.Video);
 
             _answeringPlayerLabel.text = "";
             _answeringPlayer = null;
@@ -125,8 +135,18 @@ namespace Quiz.Gameplay.UI
             _timerCounter.RunTimer(_questionTimer);
 
             _uiController.PlayerAnswering += HandlePlayerAnswering;
+            _uiController.VoiceManager.Say(plan.Question);
 
-            if (plan.Picture != null)
+            if (plan.Picture != null && string.IsNullOrEmpty(plan.Question))
+                CanAnswerHandler();
+        }
+
+        private void Update()
+        {
+            if (_canAcceptAnswers)
+                return;
+
+            if (_uiController.VoiceManager.Status(0) % 2 != 0)
                 CanAnswerHandler();
         }
 
@@ -154,14 +174,18 @@ namespace Quiz.Gameplay.UI
             if (_answeringPlayer != null || _failedPlayers.Contains(player))
                 return;
 
-            _playerTimer = new QuizTimer(PlayerAnswerTimer, _playerTimerPanel, false, new []
-            {
-                new QuizThreshold(0, IncorrectAnswer),
-            });
+            _playerTimer = new QuizTimer(_plan.IsCatInPoke ? PlayerAnswerTimer * 2 : PlayerAnswerTimer,
+                _playerTimerPanel, false, new[]
+                {
+                    new TimerThreshold(0, IncorrectAnswer),
+                });
 
             _timerCounter.RunTimer(_playerTimer);
 
             _acceptButton.gameObject.SetActive(true);
+            _extraPointsAcceptButton.gameObject.SetActive(true);
+            _lessPointsAcceptButton.gameObject.SetActive(true);
+
             _declineButton.gameObject.SetActive(true);
 
             _questionTimer.Pause();
@@ -177,20 +201,22 @@ namespace Quiz.Gameplay.UI
 
             _canAnswerButton.gameObject.SetActive(false);
 
-            if (_plane.Audio != null)
-                _audioSource.PlayOneShot(_plane.Audio);
+            if (_plan.Audio != null)
+                _audioSource.PlayOneShot(_plan.Audio);
 
             _canAcceptAnswers = true;
 
-            if (_plane.IsCatInPoke && _catInPokePlayer != null)
+            if (_plan.IsCatInPoke && _catInPokePlayer != null)
                 HandlePlayerAnswering(_catInPokePlayer);
         }
 
-        private void CorrectAnswer()
+        private void CorrectAnswer(float multiplier = 1f)
         {
+            var resultPoints = Mathf.RoundToInt(QuestionPrice * multiplier);
+
             SetAsAnswering(_answeringPlayer, false);
 
-            _answeringPlayer.UpdatePoints(QuestionPrice);
+            _answeringPlayer.UpdatePoints(resultPoints);
             _uiController.SetDecisionMaker(_answeringPlayer);
 
             _questionTimer.Unpause();
@@ -199,7 +225,7 @@ namespace Quiz.Gameplay.UI
             _answeringPlayer.SendMessage(new QuizCommand
             {
                 Command = SocketServer.CorrectAnswer,
-                Parameter = QuestionPrice.ToString()
+                Parameter = resultPoints.ToString(CultureInfo.InvariantCulture)
             });
 
             _playerTimer?.Stop();
@@ -223,6 +249,9 @@ namespace Quiz.Gameplay.UI
             _audioSource.UnPause();
 
             _acceptButton.gameObject.SetActive(false);
+            _extraPointsAcceptButton.gameObject.SetActive(false);
+            _lessPointsAcceptButton.gameObject.SetActive(false);
+
             _declineButton.gameObject.SetActive(false);
 
             _answeringPlayer.SendMessage(new QuizCommand

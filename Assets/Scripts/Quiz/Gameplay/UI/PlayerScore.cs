@@ -135,8 +135,9 @@ namespace Quiz.Gameplay.UI
         private void DisplayLatency()
         {
             var latency = _latency * 1000;
+            var displayLatency = latency > 0 && latency < 1000;
 
-            _latencyLabel.text = latency > 0 ? latency.ToString("0") + "ms" : string.Empty;
+            _latencyLabel.text = displayLatency ? latency.ToString("0") + "ms" : string.Empty;
         }
 
         public void SetCountdown(bool value)

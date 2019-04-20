@@ -3,12 +3,12 @@ using Quiz.Gameplay.UI;
 
 namespace Quiz.Gameplay
 {
-    public class QuizThreshold
+    public class TimerThreshold
     {
         public float Value;
         public Action Action;
 
-        public QuizThreshold(float value, Action action)
+        public TimerThreshold(float value, Action action)
         {
             Value = value;
             Action = action;
@@ -19,13 +19,13 @@ namespace Quiz.Gameplay
     {
         public float Duration;
         public TimerPanel Template;
-        public QuizThreshold[] Thresholds;
+        public TimerThreshold[] Thresholds;
         public bool Paused;
 
         public event Action<bool> OnPause;
         public event Action<QuizTimer> OnStopped;
 
-        public QuizTimer(float duration, TimerPanel template, bool paused, QuizThreshold[] thresholds)
+        public QuizTimer(float duration, TimerPanel template, bool paused, TimerThreshold[] thresholds)
         {
             Duration = duration;
             Template = template;

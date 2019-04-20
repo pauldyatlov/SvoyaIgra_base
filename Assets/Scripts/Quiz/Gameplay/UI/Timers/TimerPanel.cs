@@ -11,7 +11,7 @@ namespace Quiz.Gameplay.UI
     {
         [SerializeField] private TextMeshProUGUI _timerLabel = default;
 
-        private readonly List<QuizThreshold> _forcedThresholds = new List<QuizThreshold>();
+        private readonly List<TimerThreshold> _forcedThresholds = new List<TimerThreshold>();
         private bool _canProceed;
         private QuizTimer _timer;
         private Coroutine _updateCoroutine;
