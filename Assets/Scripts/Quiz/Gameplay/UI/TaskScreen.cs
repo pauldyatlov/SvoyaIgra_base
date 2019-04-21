@@ -135,7 +135,7 @@ namespace Quiz.Gameplay.UI
             _timerCounter.RunTimer(_questionTimer);
 
             _uiController.PlayerAnswering += HandlePlayerAnswering;
-            _uiController.VoiceManager.Say(plan.Question);
+            _uiController.QuestionReader.Say("<rate speed='3'>" + plan.Question +"</rate>");
 
             if (plan.Picture != null && string.IsNullOrEmpty(plan.Question))
                 CanAnswerHandler();
@@ -146,7 +146,7 @@ namespace Quiz.Gameplay.UI
             if (_canAcceptAnswers)
                 return;
 
-            if (_uiController.VoiceManager.Status(0) % 2 != 0)
+            if (_uiController.QuestionReader.Status(0) % 2 != 0)
                 CanAnswerHandler();
         }
 

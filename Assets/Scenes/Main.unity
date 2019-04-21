@@ -530,7 +530,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a9d3eab6e08ca94c91b3a26baf9d072, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _plan: {fileID: 0}
+  _plan: {fileID: 11400000, guid: b4075dfaeee931c4f8237add3b4c9749, type: 2}
   _uiController: {fileID: 592988926}
 --- !u!4 &592988928
 Transform:

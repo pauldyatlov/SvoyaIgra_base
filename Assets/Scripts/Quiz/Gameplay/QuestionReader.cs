@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace Quiz.Gameplay
 {
-    public class VoiceManager
+    public class QuestionReader
     {
         [DllImport("SAPI_UNITY_DLL")]
         private static extern int Uni_Voice_Init();
@@ -73,16 +73,15 @@ namespace Quiz.Gameplay
         const int SPF_PARSE_SAPI = 128;
         const int SPF_PARSE_SSML = 256;
 
-        private int _voiceNumber;
-        private string[] _voiceNames;
-
-        public VoiceManager()
+        public QuestionReader()
         {
             // Info (64Bits OS):
             // Executing Windows\sysWOW64\speech\SpeechUX\SAPI.cpl brings up a Window that displays (!) all of the 32 bit Voices
             // and the current single 64 bit Voice "Anna".
 
             // HKEY_LOCAL_MACHINE\\SOFTWARE\Microsoft\Speech\\Voices\\Tokens\\xxxVOICExxxINSTALLEDxxx\\Attributes >>> (Name)
+
+            int voiceNumber;
             const string speechTokens = "Software\\Microsoft\\Speech\\Voices\\Tokens";
 
             using (var registryKey = Registry.LocalMachine.OpenSubKey(speechTokens))
@@ -90,26 +89,25 @@ namespace Quiz.Gameplay
                 if (registryKey == null)
                     return;
 
-                _voiceNumber = registryKey.SubKeyCount; // key found not mean true voice number !!!
-                _voiceNames = new string[_voiceNumber + 1];
-                _voiceNumber = 0;
+                var voiceNames = new string[registryKey.SubKeyCount + 1];
+                voiceNumber = 0;
 
                 foreach (var regKeyFound in registryKey.GetSubKeyNames())
                 {
-                    var finalKey = "HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Speech\\Voices\\Tokens\\" + regKeyFound +
-                                   "\\Attributes";
+                    var voiceKeyName = "HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Speech\\Voices\\Tokens\\" +
+                                       regKeyFound + "\\Attributes";
 
-                    var gotchaVoiceName = (string) Registry.GetValue(finalKey, "Name", "");
+                    var voiceName = (string) Registry.GetValue(voiceKeyName, "Name", "");
 
-                    if (string.IsNullOrEmpty(gotchaVoiceName))
+                    if (string.IsNullOrEmpty(voiceName))
                         continue;
 
-                    _voiceNumber++;
-                    _voiceNames[_voiceNumber] = gotchaVoiceName;
+                    voiceNumber++;
+                    voiceNames[voiceNumber] = voiceName;
                 }
             }
 
-            if (_voiceNumber != 0)
+            if (voiceNumber != 0)
                 Uni_Voice_Init();
         }
 
