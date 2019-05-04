@@ -15,7 +15,7 @@ namespace Quiz.Network
         public static event Action<Matchmaker.Stream> OnPlayerDisconnected;
         public static event Action<string> OnPlayerAnswered;
 
-        private const string Host = "139.162.199.78";
+        private const string Host = "partyquiz.club";
         private const int Port = 3013;
 
         private static TcpListener _listener;
