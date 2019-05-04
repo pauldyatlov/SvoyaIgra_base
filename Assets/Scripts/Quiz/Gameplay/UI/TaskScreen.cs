@@ -74,13 +74,13 @@ namespace Quiz.Gameplay.UI
             });
 
 
-            if (plan.IsCatInPoke)
+            if (_plan.IsCatInPoke)
             {
                 _catInPokePlayer = null;
 
                 _catInPokeScreen.Show(
                     _uiController.PlayerViews.Keys.ToList(),
-                    plan.CatInPoke,
+                    _plan.CatInPoke,
                     player =>
                     {
                         Display();
@@ -89,13 +89,13 @@ namespace Quiz.Gameplay.UI
                         _catInPokePlayer = player;
                         _answeringPlayer = null;
 
-                        ShowQuestion(plan);
+                        ShowQuestion();
                     });
             }
             else
             {
                 Display();
-                ShowQuestion(plan);
+                ShowQuestion();
             }
         }
 
@@ -113,15 +113,15 @@ namespace Quiz.Gameplay.UI
             _canAnswerButton.gameObject.SetActive(true);
         }
 
-        private void ShowQuestion(QuestionPlan plan)
+        private void ShowQuestion()
         {
             _failedPlayers.Clear();
 
             _label.text = _plan.Question;
-            _image.gameObject.SetActive(plan.Picture != null);
+            _image.gameObject.SetActive(_plan.Picture != null);
 
-            if (plan.Picture != null)
-                _image.sprite = plan.Picture;
+            if (_plan.Picture != null)
+                _image.sprite = _plan.Picture;
 
             _videoPlayer.gameObject.SetActive(_plan.Video != null);
 
@@ -135,15 +135,18 @@ namespace Quiz.Gameplay.UI
             _timerCounter.RunTimer(_questionTimer);
 
             _uiController.PlayerAnswering += HandlePlayerAnswering;
-            _uiController.QuestionReader.Say("<rate speed='3'>" + plan.Question +"</rate>");
+            _uiController.QuestionReader.Say("<rate speed='3'>" + _plan.Question +"</rate>");
 
-            if (plan.Picture != null && string.IsNullOrEmpty(plan.Question))
+            if (string.IsNullOrEmpty(_plan.Question))
                 CanAnswerHandler();
         }
 
         private void Update()
         {
             if (_canAcceptAnswers)
+                return;
+
+            if (string.IsNullOrEmpty(_plan.Question))
                 return;
 
             if (_uiController.QuestionReader.Status(0) % 2 != 0)
