@@ -1,10 +1,11 @@
 ﻿using System;
+using System.IO;
 using System.Net.Sockets;
 using UnityEngine;
 
 namespace Quiz.Network
 {
-    public static class SocketServer
+    public class SocketServer
     {
         public const string CorrectAnswer = "CorrectAnswer";
         public const string WrongAnswer = "WrongAnswer";
@@ -19,20 +20,31 @@ namespace Quiz.Network
         private const int Port = 3013;
 
         private static TcpListener _listener;
+        private static Matchmaker _matchmaker;
 
         public static async void Init(string roomName)
         {
             try
             {
-                var matchmaker = await Matchmaker.Create(new Uri("ws://" + Host + ":" + Port), roomName);
+                _matchmaker = await Matchmaker.Create(new Uri("ws://" + Host + ":" + Port), roomName);
 
-                matchmaker.PlayerAdded += player => _ = new Player(player);
-                matchmaker.PlayerRemoved += stream => OnPlayerDisconnected?.Invoke(stream);
+                _matchmaker.PlayerAdded += OnPlayerAdded;
+                _matchmaker.PlayerRemoved += OnPlayerRemoved;
             }
             catch (Exception e)
             {
                 Debug.LogException(e);
             }
+        }
+
+        private static void OnPlayerAdded(Matchmaker.Stream stream)
+        {
+            _ = new Player(stream);
+        }
+
+        private static void OnPlayerRemoved(Matchmaker.Stream stream)
+        {
+            OnPlayerDisconnected?.Invoke(stream);
         }
 
         public static void PlayerAnswer(string playerName)
@@ -43,6 +55,12 @@ namespace Quiz.Network
         public static void PlayerConnect(Player player)
         {
             OnPlayerConnected?.Invoke(player);
+        }
+
+        private void OnApplicationQuit()
+        {
+            _matchmaker.PlayerAdded -= OnPlayerAdded;
+            _matchmaker.PlayerRemoved -= OnPlayerRemoved;
         }
     }
 }

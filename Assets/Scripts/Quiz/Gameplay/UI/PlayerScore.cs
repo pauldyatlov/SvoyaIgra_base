@@ -95,7 +95,7 @@ namespace Quiz.Gameplay.UI
             _canvasGroup.alpha = value ? 1 : 0.3f;
         }
 
-        public void SetConnectedStatus(bool online)
+        private void SetConnectedStatus(bool online)
         {
             SetCanvasGroup(online);
 

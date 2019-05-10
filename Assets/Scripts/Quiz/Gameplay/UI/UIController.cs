@@ -12,8 +12,6 @@ namespace Quiz.Gameplay.UI
     public class UIController : UIElement
     {
         [SerializeField] private SetRoomScreen _setRoomScreen = default;
-        [SerializeField] private TextMeshProUGUI _roomName = default;
-
         [SerializeField] private RoundScreen _roundScreenTemplate = default;
         [SerializeField] private RectTransform _roundContainer = default;
 
@@ -21,8 +19,11 @@ namespace Quiz.Gameplay.UI
         [SerializeField] private RectTransform _scoreContainer = default;
 
         [SerializeField] private TaskScreen _taskScreen = default;
-        [SerializeField] private SetScoreWindow _setScoreWindow = default;
         [SerializeField] private FinalRoundScreen _finalRoundScreen = default;
+
+        [SerializeField] private SetScoreWindow _setScoreWindow = default;
+        [SerializeField] private Button _gameInfoButton = default;
+        [SerializeField] private GameInfoWindow _gameInfoWindow = default;
 
         public event Action<Player> PlayerAnswering;
         public QuestionReader QuestionReader;
@@ -34,18 +35,31 @@ namespace Quiz.Gameplay.UI
         private Plan _plan;
         private int _currentRound;
         private Player _decisionMaker;
+        private string _selectedRoom;
+
+        private void Awake()
+        {
+            _gameInfoButton.onClick.AddListener(() =>
+            {
+                if (_gameInfoWindow.gameObject.activeSelf)
+                {
+                    _gameInfoWindow.Close();
+                    return;
+                }
+
+                _gameInfoWindow.Show(_selectedRoom);
+            });
+        }
 
         public void Show(Action<string> onRoomSelected)
         {
             QuestionReader = new QuestionReader();
 
-            _roomName.text = string.Empty;
-
             ShowGameObject();
 
             _setRoomScreen.Show(roomName =>
             {
-                _roomName.text = roomName;
+                _selectedRoom = roomName;
 
                 onRoomSelected(roomName);
             });
