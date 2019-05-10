@@ -13,8 +13,8 @@ namespace Quiz.Gameplay.UI
         [SerializeField] private GameObject _decisionMakerMarker = default;
         [SerializeField] private Image _background = default;
 
-        [SerializeField] private Text _nameLabel = default;
-        [SerializeField] private Text _pointsLabel = default;
+        [SerializeField] private TextMeshProUGUI _nameLabel = default;
+        [SerializeField] private TextMeshProUGUI _pointsLabel = default;
 
         [SerializeField] private Color _defaultBackgroundColor = default;
         [SerializeField] private Color _blinkBackgroundColor = default;

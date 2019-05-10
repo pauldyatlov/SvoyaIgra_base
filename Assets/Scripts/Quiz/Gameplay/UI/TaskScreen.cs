@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using Quiz.Network;
 using System.Linq;
+using System.Text;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,20 +18,15 @@ namespace Quiz.Gameplay.UI
 
         [SerializeField] private TimerPanel _questionTimerPanel = default;
         [SerializeField] private TimerPanel _playerTimerPanel = default;
-
         [SerializeField] private TimerCounter _timerCounter = default;
 
         [SerializeField] private CatInPokeScreen _catInPokeScreen = default;
-        [SerializeField] private Text _answeringPlayerLabel = default;
-        [SerializeField] private Text _label = default;
-        [SerializeField] private Image _image = default;
+        [SerializeField] private TextMeshProUGUI _answeringPlayerLabel = default;
+        [SerializeField] private GameObject _answeringPlayerPanel = default;
 
-        [SerializeField] private Button _acceptButton = default;
-        [SerializeField] private Button _extraPointsAcceptButton = default;
-        [SerializeField] private Button _lessPointsAcceptButton = default;
-
-        [SerializeField] private Button _declineButton = default;
-        [SerializeField] private Button _canAnswerButton = default;
+        [SerializeField] private DecideAnswerWindow _decideAnswerWindow;
+        [SerializeField] private TextMeshProUGUI _questionText = default;
+        [SerializeField] private Image _questionImage = default;
 
         private readonly List<Player> _failedPlayers = new List<Player>();
         private bool _paused;
@@ -48,16 +46,17 @@ namespace Quiz.Gameplay.UI
 
         private QuizTimer _questionTimer;
         private QuizTimer _playerTimer;
+        private Coroutine _autoTypeText;
 
         private void Awake()
         {
-            _acceptButton.onClick.AddListener(() => { CorrectAnswer(); });
-            _extraPointsAcceptButton.onClick.AddListener(() => { CorrectAnswer(1.5f); });
-            _lessPointsAcceptButton.onClick.AddListener(() => { CorrectAnswer(0.5f); });
-
-            _declineButton.onClick.AddListener(IncorrectAnswer);
-
-            _canAnswerButton.onClick.AddListener(CanAnswerHandler);
+            _decideAnswerWindow.Show(arg =>
+            {
+                if (arg > 0)
+                    CorrectAnswer(arg);
+                else
+                    IncorrectAnswer();
+            });
         }
 
         public void Show(QuestionPlan plan, UIController controller)
@@ -105,29 +104,29 @@ namespace Quiz.Gameplay.UI
 
             ShowGameObject();
 
-            _acceptButton.gameObject.SetActive(false);
-            _extraPointsAcceptButton.gameObject.SetActive(false);
-            _lessPointsAcceptButton.gameObject.SetActive(false);
-
-            _declineButton.gameObject.SetActive(false);
-            _canAnswerButton.gameObject.SetActive(true);
+            _decideAnswerWindow.HideGameObject();
         }
 
         private void ShowQuestion()
         {
             _failedPlayers.Clear();
 
-            _label.text = _plan.Question;
-            _image.gameObject.SetActive(_plan.Picture != null);
+            if (_autoTypeText != null)
+                StopCoroutine(_autoTypeText);
+
+            _autoTypeText = StartCoroutine(Co_AutoTypeText(_plan.Question));
+
+            _questionImage.gameObject.SetActive(_plan.Picture != null);
 
             if (_plan.Picture != null)
-                _image.sprite = _plan.Picture;
+                _questionImage.sprite = _plan.Picture;
 
             _videoPlayer.gameObject.SetActive(_plan.Video != null);
 
             if (_plan.Video != null)
                 _videoPlayer.Show(_plan.Video);
 
+            _answeringPlayerPanel.SetActive(false);
             _answeringPlayerLabel.text = "";
             _answeringPlayer = null;
 
@@ -145,6 +144,9 @@ namespace Quiz.Gameplay.UI
         {
             if (_canAcceptAnswers)
                 return;
+
+            if (Input.GetKeyDown(KeyCode.Space))
+                CanAnswerHandler();
 
             if (string.IsNullOrEmpty(_plan.Question))
                 return;
@@ -185,11 +187,7 @@ namespace Quiz.Gameplay.UI
 
             _timerCounter.RunTimer(_playerTimer);
 
-            _acceptButton.gameObject.SetActive(true);
-            _extraPointsAcceptButton.gameObject.SetActive(true);
-            _lessPointsAcceptButton.gameObject.SetActive(true);
-
-            _declineButton.gameObject.SetActive(true);
+            _decideAnswerWindow.ShowGameObject();
 
             _questionTimer.Pause();
             _audioSource.Pause();
@@ -201,8 +199,6 @@ namespace Quiz.Gameplay.UI
         private void CanAnswerHandler()
         {
             _questionTimer.Unpause();
-
-            _canAnswerButton.gameObject.SetActive(false);
 
             if (_plan.Audio != null)
                 _audioSource.PlayOneShot(_plan.Audio);
@@ -251,11 +247,7 @@ namespace Quiz.Gameplay.UI
             _questionTimer.Unpause();
             _audioSource.UnPause();
 
-            _acceptButton.gameObject.SetActive(false);
-            _extraPointsAcceptButton.gameObject.SetActive(false);
-            _lessPointsAcceptButton.gameObject.SetActive(false);
-
-            _declineButton.gameObject.SetActive(false);
+            _decideAnswerWindow.HideGameObject();
 
             _answeringPlayer.SendMessage(new QuizCommand
             {
@@ -269,8 +261,27 @@ namespace Quiz.Gameplay.UI
             _answeringPlayer = null;
         }
 
+        private IEnumerator Co_AutoTypeText(string textToType)
+        {
+            _questionText.text = string.Empty;
+
+            foreach (var unused in textToType)
+                _questionText.text += "  ";
+
+            var resultString = new StringBuilder(_questionText.text);
+
+            for (var i = 0; i < textToType.Length; i++)
+            {
+                resultString[i] = textToType[i];
+
+                _questionText.text = resultString.ToString();
+                yield return new WaitForSeconds(.05f);
+            }
+        }
+
         private void SetAsAnswering(Player player, bool value)
         {
+            _answeringPlayerPanel.SetActive(value);
             _answeringPlayerLabel.text = value ? "ОТВЕЧАЕТ " + player.Name : "";
 
             foreach (var view in _uiController.PlayerViews.Where(x => !_failedPlayers.Contains(x.Key)))
@@ -309,6 +320,13 @@ namespace Quiz.Gameplay.UI
 
             _playerTimer?.Stop();
             _playerTimer = null;
+
+            if (_autoTypeText != null)
+                StopCoroutine(_autoTypeText);
+
+            _autoTypeText = null;
+
+            _decideAnswerWindow.Close();
 
             base.Close();
         }

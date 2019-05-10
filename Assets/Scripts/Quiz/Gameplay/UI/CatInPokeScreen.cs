@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using Quiz.Network;
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Quiz.Gameplay.UI
 {
     public class CatInPokeScreen : UIElement
     {
-        [SerializeField] private Text _label = default;
+        [SerializeField] private TextMeshProUGUI _label = default;
 
         [SerializeField] private RectTransform _container = default;
         [SerializeField] private PlayerScore _playerScoreTemplate = default;

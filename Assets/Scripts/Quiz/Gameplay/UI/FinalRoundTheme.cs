@@ -1,13 +1,13 @@
 ﻿using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
 
 namespace Quiz.Gameplay.UI
 {
     public class FinalRoundTheme : UIElement
     {
-        [SerializeField] private Text _roundName = default;
+        [SerializeField] private TextMeshProUGUI _roundName = default;
 
         private FinalQuestion _question;
         private Action<FinalQuestion> _onClick;
