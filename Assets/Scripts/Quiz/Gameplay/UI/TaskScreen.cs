@@ -119,7 +119,12 @@ namespace Quiz.Gameplay.UI
             _questionImage.gameObject.SetActive(_plan.Picture != null);
 
             if (_plan.Picture != null)
+            {
                 _questionImage.sprite = _plan.Picture;
+                
+                _questionImage.DisableSpriteOptimizations();
+                _questionImage.OnRebuildRequested();
+            }
 
             _videoPlayer.gameObject.SetActive(_plan.Video != null);
 

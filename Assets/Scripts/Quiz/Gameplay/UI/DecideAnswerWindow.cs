@@ -45,5 +45,13 @@ namespace Quiz.Gameplay.UI
                 image.alpha = (255 - positionDiff) / 255;
             }
         }
+
+        public override void Close()
+        {
+            foreach (var image in _canvasGroups)
+                image.alpha = 0;
+
+            base.Close();
+        }
     }
 }
