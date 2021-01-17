@@ -7,11 +7,11 @@ namespace Quiz.Gameplay.UI
 {
     public class DecideAnswerWindow : UIElement
     {
-        [SerializeField] private TMP_InputField _inputField;
-        [SerializeField] private CanvasGroup[] _canvasGroups;
+        [SerializeField] private TMP_InputField _inputField = default;
+        [SerializeField] private CanvasGroup[] _canvasGroups = default;
 
-        [SerializeField] private Button _correctButton;
-        [SerializeField] private Button _incorrectButton;
+        [SerializeField] private Button _correctButton = default;
+        [SerializeField] private Button _incorrectButton = default;
 
         private Action<float> _onDecided;
 

@@ -6,8 +6,8 @@ namespace Quiz.Gameplay.UI
 {
     public class GameInfoWindow : UIElement
     {
-        [SerializeField] private TextMeshProUGUI _roomName;
-        [SerializeField] private Button _okButton;
+        [SerializeField] private TextMeshProUGUI _roomName = default;
+        [SerializeField] private Button _okButton = default;
 
         private void Awake()
         {

@@ -25,17 +25,26 @@ namespace Quiz.Gameplay
     }
 
     [Serializable]
+    public class Answer
+    {
+        public string Text;
+        public Sprite Picture;
+        public VideoClip Video;
+    }
+
+    [Serializable]
     public class QuestionPlan
     {
         public int Price;
         public string Question;
-        public string Answer;
         public Sprite Picture;
         public AudioClip Audio;
         public VideoClip Video;
 
-        public bool IsCatInPoke;
-        public CatInPoke CatInPoke;
+        [HideInInspector] public bool IsCatInPoke;
+        [HideInInspector] public CatInPoke CatInPoke;
+
+        public Answer Answer;
     }
 
     [Serializable]
@@ -43,6 +52,12 @@ namespace Quiz.Gameplay
     {
         public string Theme;
         public int Price;
+
+        public CatInPoke(string theme, int price)
+        {
+            Theme = theme;
+            Price = price;
+        }
     }
 
     [Serializable]

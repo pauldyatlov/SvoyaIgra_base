@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Video;
@@ -14,6 +15,12 @@ namespace Quiz.Gameplay.UI
         private VideoPlayer _videoPlayer;
         private AudioSource _audioSource;
 
+        private void Awake()
+        {
+            _videoPlayer = gameObject.AddComponent<VideoPlayer>();
+            _audioSource = gameObject.AddComponent<AudioSource>();
+        }
+
         public void Show(VideoClip videoClip)
         {
             _videoClip = videoClip;
@@ -23,9 +30,6 @@ namespace Quiz.Gameplay.UI
 
         private IEnumerator Co_PlayView()
         {
-            _videoPlayer = gameObject.AddComponent<VideoPlayer>();
-            _audioSource = gameObject.AddComponent<AudioSource>();
-
             _videoPlayer.playOnAwake = false;
             _audioSource.playOnAwake = false;
             _audioSource.Pause();
@@ -39,7 +43,7 @@ namespace Quiz.Gameplay.UI
             _videoPlayer.clip = _videoClip;
             _videoPlayer.Prepare();
 
-            var waitTime = new WaitForSeconds(.1f);
+            var waitTime = new WaitForSeconds(.5f);
             while (!_videoPlayer.isPrepared)
             {
                 yield return waitTime;
@@ -53,6 +57,17 @@ namespace Quiz.Gameplay.UI
 
             while (_videoPlayer.isPlaying)
                 yield return null;
+        }
+
+        public void SetPauseStatus(bool value)
+        {
+            if (_videoPlayer == null)
+                return;
+
+            if (value)
+                _videoPlayer.Pause();
+            else
+                _videoPlayer.Play();
         }
     }
 }

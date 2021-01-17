@@ -4,6 +4,8 @@ using System.Globalization;
 using Quiz.Network;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
+using Quiz.Utils;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,8 +15,11 @@ namespace Quiz.Gameplay.UI
     public class TaskScreen : UIElement
     {
         [SerializeField] private GameObject _themesGameObject = default;
-        [SerializeField] private AudioSource _audioSource = default;
         [SerializeField] private StreamVideo _videoPlayer = default;
+        [SerializeField] private AudioSource _audioSource = default;
+
+        [SerializeField] private AudioClip[] _applauseClips = default;
+        [SerializeField] private AudioSource _applauseSource = default;
 
         [SerializeField] private TimerPanel _questionTimerPanel = default;
         [SerializeField] private TimerPanel _playerTimerPanel = default;
@@ -24,7 +29,7 @@ namespace Quiz.Gameplay.UI
         [SerializeField] private TextMeshProUGUI _answeringPlayerLabel = default;
         [SerializeField] private GameObject _answeringPlayerPanel = default;
 
-        [SerializeField] private DecideAnswerWindow _decideAnswerWindow;
+        [SerializeField] private DecideAnswerWindow _decideAnswerWindow = default;
         [SerializeField] private TextMeshProUGUI _questionText = default;
         [SerializeField] private Image _questionImage = default;
 
@@ -34,8 +39,8 @@ namespace Quiz.Gameplay.UI
         private QuestionPlan _plan;
         private Player _answeringPlayer;
 
-        private const int MinTimer = 15;
-        private const int PlayerAnswerTimer = 20;
+        private const int MinTimer = 12;
+        private const int PlayerAnswerTimer = 18;
 
         private bool _canAcceptAnswers;
         private Player _catInPokePlayer;
@@ -47,12 +52,15 @@ namespace Quiz.Gameplay.UI
         private QuizTimer _questionTimer;
         private QuizTimer _playerTimer;
         private Coroutine _autoTypeText;
+        private bool _wasAnswerCorrect;
 
         private void Awake()
         {
             _decideAnswerWindow.Show(arg =>
             {
-                if (arg > 0)
+                _wasAnswerCorrect = arg > 0;
+
+                if (_wasAnswerCorrect)
                     CorrectAnswer(arg);
                 else
                     IncorrectAnswer();
@@ -69,9 +77,13 @@ namespace Quiz.Gameplay.UI
             _questionTimer = new QuizTimer(MinTimer, _questionTimerPanel, true, new[]
             {
                 new TimerThreshold(3, () => { SoundManager.Instance.PlayNoAnswer(); }),
-                new TimerThreshold(0, Close)
-            });
+                new TimerThreshold(0, () =>
+                {
+                    _wasAnswerCorrect = false;
 
+                    Close();
+                })
+            });
 
             if (_plan.IsCatInPoke)
             {
@@ -121,7 +133,7 @@ namespace Quiz.Gameplay.UI
             if (_plan.Picture != null)
             {
                 _questionImage.sprite = _plan.Picture;
-                
+
                 _questionImage.DisableSpriteOptimizations();
                 _questionImage.OnRebuildRequested();
             }
@@ -139,7 +151,7 @@ namespace Quiz.Gameplay.UI
             _timerCounter.RunTimer(_questionTimer);
 
             _uiController.PlayerAnswering += HandlePlayerAnswering;
-            _uiController.QuestionReader.Say("<rate speed='3'>" + _plan.Question +"</rate>");
+            _uiController.QuestionReader.Say("<rate speed='3'>" + _plan.Question + "</rate>");
 
             if (string.IsNullOrEmpty(_plan.Question))
                 CanAnswerHandler();
@@ -196,6 +208,7 @@ namespace Quiz.Gameplay.UI
 
             _questionTimer.Pause();
             _audioSource.Pause();
+            _videoPlayer.SetPauseStatus(true);
 
             _answeringPlayer = player;
             SetAsAnswering(_answeringPlayer, true);
@@ -225,6 +238,7 @@ namespace Quiz.Gameplay.UI
 
             _questionTimer.Unpause();
             _audioSource.UnPause();
+            _videoPlayer.SetPauseStatus(false);
 
             _answeringPlayer.SendMessage(new QuizCommand
             {
@@ -251,6 +265,7 @@ namespace Quiz.Gameplay.UI
 
             _questionTimer.Unpause();
             _audioSource.UnPause();
+            _videoPlayer.SetPauseStatus(false);
 
             _decideAnswerWindow.HideGameObject();
 
@@ -307,13 +322,64 @@ namespace Quiz.Gameplay.UI
             }
         }
 
+        private async Task ShowAnswer()
+        {
+            _questionTimer.Pause();
+
+            await Task.Yield();
+
+            var answerString = _plan.Answer.Text;
+            var answerPicture = _plan.Answer.Picture;
+            var answerVideo = _plan.Answer.Video;
+
+            _questionImage.gameObject.SetActive(answerPicture != null);
+
+            if (string.IsNullOrEmpty(answerString) == false)
+            {
+                _questionText.text = answerString;
+
+                await new WaitForSeconds(2f);
+            }
+
+            if (answerPicture != null)
+            {
+                _questionImage.sprite = answerPicture;
+
+                _questionImage.DisableSpriteOptimizations();
+                _questionImage.OnRebuildRequested();
+
+                await new WaitForSeconds(2f);
+            }
+
+            _videoPlayer.gameObject.SetActive(answerVideo);
+
+            if (answerVideo)
+            {
+                _videoPlayer.Show(answerVideo);
+                await new WaitForSeconds((float)answerVideo.length);
+            }
+
+            if (_wasAnswerCorrect)
+            {
+                var applauseClip = _applauseClips.PickRandom();
+                _applauseSource.PlayOneShot(applauseClip);
+            }
+        }
+
         public override void Close()
+        {
+            AsyncClose().HandleExceptions();
+        }
+
+        private async Task AsyncClose()
         {
             ClearCounter();
             _countedPlayers.Clear();
 
             if (_answeringPlayer != null)
                 IncorrectAnswer();
+            else
+                await ShowAnswer();
 
             foreach (var view in _uiController.PlayerViews)
                 view.Value.SetCanvasGroup(true);
